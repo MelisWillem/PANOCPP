@@ -10,6 +10,6 @@ private:
 public:
     LipschitzEstimator(IDerivableFunction & costFunction);
     ~LipschitzEstimator();
-    double Estimate(Vector & location, Vector & gradient);
+    double Estimate(const Vector & location, const Vector & gradient);
 };
 

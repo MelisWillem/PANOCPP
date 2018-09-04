@@ -3,5 +3,5 @@
 #pragma once
 class IProximalFunction {
 public:
-    virtual double Evaluate(const Vector & location, Vector & proxLocation);
+    virtual double Evaluate(Vector & location);
 };

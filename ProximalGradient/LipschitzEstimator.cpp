@@ -18,7 +18,7 @@ LipschitzEstimator::~LipschitzEstimator()
 //  Theorem:
 //      ||gradient(x)|| < B
 //       f is B-lipschitz
-double LipschitzEstimator::Estimate(Vector& location,Vector& gradient)
+double LipschitzEstimator::Estimate(const Vector& location,const Vector& gradient)
 {
     // find delta= max{small number,10^{-6}*u_0}
     double delta = location.cwiseMax(
