@@ -1,0 +1,4 @@
+-DDEBUG
+-I lib\\catch2
+-I lib\\eigen
+-I include

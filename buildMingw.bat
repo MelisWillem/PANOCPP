@@ -1,5 +1,0 @@
-cd ./build
-
-cmake ../ -G "MinGW Makefiles" -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_EXPORT_COMPILE_COMMANDS=ON 
-
-cd ../
