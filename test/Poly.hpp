@@ -10,12 +10,11 @@ namespace test {
     {
         // return const + gradient
         // do we require a move of a vector to put this result in?
-        double cost =0;
+        double cost = 0;
         auto gradient = position;
-        for(auto i=0;i<gradient.size();i++)
-        {
-            gradient[i] = (degree)*pow(gradient[i],(degree-1));
-            cost += pow(position[i],degree);
+        for (auto i = 0; i < gradient.size(); i++) {
+            gradient[i] = (degree)*pow(gradient[i], (degree - 1));
+            cost += pow(position[i], degree);
         }
         return std::make_pair(cost, gradient);
     }

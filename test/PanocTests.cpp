@@ -4,4 +4,3 @@
 #include "LischitzEstimatorTests.hpp"
 //#include"LBFGSTests.hpp"
 //#include"ProximalCalculator.hpp"
-

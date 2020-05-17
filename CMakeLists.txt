@@ -16,9 +16,12 @@ include_directories("${CMAKE_SOURCE_DIR}/include")
 enable_testing()
 
 add_executable(panocTests test/PanocTests.cpp)
+add_executable(vectorAlgTests test/VectorAlgebraTests.cpp)
 
 if(NOT MSVC)
 target_link_libraries(panocTests m) # link with the math lib, some toolchains need this
 endif()
 
 add_test(NAME panocTests COMMAND panocTests)
+add_test(NAME vectorAlgTests COMMAND vectorAlgebraTests)
+
