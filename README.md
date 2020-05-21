@@ -1,11 +1,4 @@
  # PANOCPP
-Panoc algorithm in c++ using EIGEN
+Panoc algorithm in c++, the goal is to provide a single header file that contains a working high performant panoc ssolver.
 
-## Taks ongoing development
-
-1. Implement L-BFGS using EIGEN (with tests poly/rosenbrock ) [development completed]
-2. Implement proximal gradient using EIGEN (with tests poly/rosenbrock ) [ongoing development]
-3. Implement FBE (with tests)
-4. Implement Panoc (with tests poly/rosenbrock )
-5. Compare performance CPanoc with PANOCPP
-6. Compare performance ipopt vs PANOCPP
+You can find the prototype for this solver [here at zilleplus/panocsharp](http://github.com/Zilleplus/PANOCSharp).
