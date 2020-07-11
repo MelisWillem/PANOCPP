@@ -9,7 +9,6 @@ project (PANOCPP)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories("${CMAKE_SOURCE_DIR}/lib/catch2")
-include_directories("${CMAKE_SOURCE_DIR}/lib/eigen")
 include_directories("${CMAKE_SOURCE_DIR}/include")
 
 # Test the functionality

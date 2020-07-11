@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ProximalGradientConfig.hpp"
+#include "VectorAlgebra.hpp"
 #include <iostream>
 namespace pnc {
 
@@ -22,20 +22,25 @@ public:
     //  Theorem:
     //      ||gradient(x)|| < B
     //       f is B-lipschitz
-    template <typename TVector, typename TCostFunction, typename TConfig>
+    template <typename TVectorLocation,typename TVectorGradient, typename TCostFunction, typename TConfig>
     static double estimate(
-        const TVector& location,
-        const TVector& gradient,
+        const TVectorLocation& location,
+        const TVectorGradient& gradient,
         const TConfig& config,
         const TCostFunction cost_function)
     {
         // find delta= max{small number,10^{-6}*u_0}
-        auto delta = (location*config.lipschitz_safetyValue)
-            .cwiseMax(Vector::Ones(location.size()) * config.minimum_delta);
+        //auto delta = (location*config.lipschitz_safetyValue)
+        //    .cwiseMax(Vector::Ones(location.size()) * config.minimum_delta);
+        // These 2 ungly constructs can be solved by introducing a include_if constraint on the operators between vector-vector such that vector-data_type operations ca be defined
+        //auto left = location*VectorUnit<TVectorLocation::size,TVectorLocation::data_type>(config.lipschitz_safetyValue);
+        //auto right = pnc::VectorUnit<TVectorLocation::size,TVectorLocation::data_type>(config.minimum_delta);// TODO: remove the manual double override
+        //auto delta = pnc::ComponentWiseMax(left,right);
 
-        auto newCost = cost_function(location + delta );
+        //auto newCost = cost_function((location + delta )|ToVector());
 
-        return (newCost.second - gradient).norm() / delta.norm();
+        //return Norm(newCost.second - gradient) / Norm(delta);
+        return 0;
     }
 };
 }

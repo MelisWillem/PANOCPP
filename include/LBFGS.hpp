@@ -1,7 +1,5 @@
 ﻿#include <memory>
-#include <Eigen/Core>
 #include <vector>
-#include "EigenAlgebra.hpp"
 
 inline int getFloatingIndex(int i,int cursor,int bufferSize) {
     return (cursor - 1 - i + bufferSize) % bufferSize;

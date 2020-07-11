@@ -33,28 +33,58 @@ TEST_CASE("vector algebra test")
         REQUIRE(res[0]==-1);
         REQUIRE(res[1]==-2);
     }
-}
 
-TEST_CASE("Helper methods")
-{
-    auto vec = pnc::Vector<2, double>(new double[2] { 1, 2 });
-    auto constantVec = pnc::VectorUnit<2,double>(2.0);
-    SECTION("Add constant to vector")
+    SECTION("Add right vector to left constant")
     {
-        auto res = vec + constantVec;
+        double c = 2.0;
+        auto res = c + vector1;
 
         REQUIRE(res[0]==3);
         REQUIRE(res[1]==4);
     }
 
-    SECTION("To Vec Assigment")
+    SECTION("Add left vector to right constant")
     {
-        auto buffer = Vector<2,double>();
-        buffer = constantVec;
+        double c = 2.0;
+        auto res = vector1 + c;
 
-        REQUIRE(buffer[0]==2);
-        REQUIRE(buffer[1]==2);
+        REQUIRE(res[0]==3);
+        REQUIRE(res[1]==4);
     }
+
+    SECTION("Mul right vector to left constant")
+    {
+        double c = 2.0;
+        auto res = c * vector1;
+
+        REQUIRE(res[0]==2);
+        REQUIRE(res[1]==4);
+    }
+
+    SECTION("Mul left vector to right constant")
+    {
+        double c = 2.0;
+        auto res = vector1 * c;
+
+        REQUIRE(res[0]==2);
+        REQUIRE(res[1]==4);
+    }
+
+    SECTION("Multi operation")
+    {
+        auto x = pnc::Vector<2,int>(1,2);
+        auto y = pnc::Vector<2,int>(3,4);
+        auto c = 2;
+        auto res = (x * c)+ y;
+
+        REQUIRE(res[0]==5);
+        REQUIRE(res[1]==8);
+    }
+}
+
+TEST_CASE("Helper methods")
+{
+    auto vec = pnc::Vector<2, double>( 1.0, 2.0 );
 
     SECTION("SUM")
     {
@@ -68,6 +98,6 @@ TEST_CASE("Helper methods")
 
     SECTION("ToVector")
     {
-        //auto blah = vec | ToVector();
+        auto blah = vec | ToVector();
     }
 }
