@@ -2,6 +2,7 @@
 
 #include "VectorAlgebra.hpp"
 #include <iostream>
+#include "entities.hpp"
 namespace pnc {
 
 class LipschitzEstimator {
@@ -22,24 +23,27 @@ public:
     //  Theorem:
     //      ||gradient(x)|| < B
     //       f is B-lipschitz
-    template <typename TVectorLocation,typename TVectorGradient, typename TCostFunction, typename TConfig>
-    static double estimate(
-        const TVectorLocation& location,
-        const TVectorGradient& gradient,
+    template<
+        typename TVector,
+        typename TCostFunction,
+        typename TConfig
+            >
+    static auto estimate(
+        const Location<TVector>& position,
         const TConfig& config,
         const TCostFunction cost_function)
     {
         // find delta= max{small number,10^{-6}*u_0}
-        //auto delta = (location*config.lipschitz_safetyValue)
-        //    .cwiseMax(Vector::Ones(location.size()) * config.minimum_delta);
-        // These 2 ungly constructs can be solved by introducing a include_if constraint on the operators between vector-vector such that vector-data_type operations ca be defined
-        //auto left = location*VectorUnit<TVectorLocation::size,TVectorLocation::data_type>(config.lipschitz_safetyValue);
-        //auto right = pnc::VectorUnit<TVectorLocation::size,TVectorLocation::data_type>(config.minimum_delta);// TODO: remove the manual double override
-        //auto delta = pnc::ComponentWiseMax(left,right);
+        auto delta = ComponentWiseMax(
+                (config.lipschitz_safetyValue*position.location),
+                pnc::VectorUnit<2,double>(config.minimum_delta));
 
-        //auto newCost = cost_function((location + delta )|ToVector());
+        // atm we are allocating a new vector, each time we estimate.
+        // TODO remove this so we reuse some memory, and don't allocate here
 
-        //return Norm(newCost.second - gradient) / Norm(delta);
+        auto newPosition = cost_function(position.location + delta);
+        auto deltaNorm = delta*delta;
+
         return 0;
     }
 };

@@ -1,10 +1,16 @@
 #include<variant>
 namespace pnc {
 
-template <typename TVector, typename TConstant>
+template <
+    typename TVector,
+    typename TConstant = typename TVector::data_type
+    >
 class Location {
 public:
-    Location(TVector location, TVector gradient, TConstant cost)
+    Location(TVector&& location, TVector&& gradient,TConstant cost ): 
+        location(std::forward(location)),
+        gradient(std::forward(gradient)),
+        cost(cost)
     {
         this->location = location;
         this->gradient = gradient;
@@ -16,10 +22,15 @@ public:
     const TConstant cost;
 };
 
-template <typename TVector, typename TConstant>
-class ProxLocation : Location{
-    ProxLocation (TVector location, TVector gradient, TConstant cost,TConstant gamma) :
-        base(location,gradient,cost)
+template <
+    typename TVector,
+    typename TConstant = typename TVector::data_type
+    >
+class ProxLocation : public Location<TVector>{
+    ProxLocation (TVector&& location, TVector&& gradient, TConstant cost,TConstant gamma) :
+        Location<TVector>(   std::forward(location),
+                std::forward(gradient),
+                cost)
     {
         this->gamma=gamma;
     }
@@ -29,7 +40,12 @@ class ProxLocation : Location{
 // A location is either
 // Location: not resulting from a proximal gradient step
 // ProxLocation: the result of a proximal gradient, potentially with accelerator
-using PncLocation<TVector,TConstant> = std::variant<
-    Location<TVector,TConstant>,
-    ProxLocation<TVector,TConstant>>;
+template<
+    typename TVector,
+    typename TConstant = typename TVector::data_type
+    >
+using PncLocation = std::variant<
+    Location<TVector>,
+    ProxLocation<TVector>>;
 }
+

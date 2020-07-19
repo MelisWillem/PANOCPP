@@ -8,6 +8,11 @@ cmake_minimum_required (VERSION 2.6)
 project (PANOCPP)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    MESSAGE("using clang compiler -> setting c++ version to 17")
+    SET (CMAKE_CXX_FLAGS "-Wall -std=c++17")
+endif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+
 include_directories("${CMAKE_SOURCE_DIR}/lib/catch2")
 include_directories("${CMAKE_SOURCE_DIR}/include")
 
@@ -18,7 +23,7 @@ add_executable(panocTests test/PanocTests.cpp)
 add_executable(vectorAlgTests test/VectorAlgebraTests.cpp)
 
 if(NOT MSVC)
-target_link_libraries(panocTests m) # link with the math lib, some toolchains need this
+    target_link_libraries(panocTests m) # link with the math lib, some toolchains need this
 endif()
 
 add_test(NAME panocTests COMMAND panocTests)
