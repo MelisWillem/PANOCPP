@@ -19,11 +19,8 @@ TEST_CASE("vector algebra test")
     SECTION("vector product")
     {
         auto vectorProd = vector1 * vector2;
-        unsigned int test = vectorProd.size;
 
-        REQUIRE(vectorProd[0] == 3);
-        REQUIRE(vectorProd[1] == 8);
-        REQUIRE(SUM(vectorProd) == 11);
+        REQUIRE(vectorProd == 11);
     }
 
     SECTION("vector negative")

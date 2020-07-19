@@ -14,6 +14,24 @@
 namespace pnc {
 
 template <unsigned int TSize, typename TData = double>
+class VectorUnit {
+private:
+    TData constant;
+
+public:
+    static constexpr unsigned int size = TSize;
+    using data_type = TData;
+
+    VectorUnit(TData constant): constant(constant)
+    {}
+
+    auto operator[](unsigned int index) const
+    {
+        return constant;
+    }
+};
+
+template <unsigned int TSize, typename TData = double>
 class Vector {
 private:
     TData* data;
@@ -347,7 +365,7 @@ auto operator*(
     const TLeft& left,
     const TRight& right)
 {
-    return VectorProd<TLeft, TRight>(left, right);
+    return SUM(VectorProd<TLeft, TRight>(left, right));
 }
 
 class ToVector {
