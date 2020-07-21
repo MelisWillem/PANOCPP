@@ -3,18 +3,11 @@
 #include <iostream>
 #include <string>
 #include <type_traits>
+#include <stdlib.h>
 
-// simple vector algebra
-// two operations(applied element wise) are defined:
-//    -> v = v1 * v2
-//    -> v = v1 + v2
-//
-// extra:
-// SUM -> calculates sum of all elements on the vector
 namespace pnc {
-
 template <unsigned int TSize, typename TData = double>
-class VectorUnit {
+class VectorUnit final {
 private:
     TData constant;
 
@@ -25,14 +18,14 @@ public:
     VectorUnit(TData constant): constant(constant)
     {}
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return constant;
     }
 };
 
 template <unsigned int TSize, typename TData = double>
-class Vector {
+class Vector final{
 private:
     TData* data;
 
@@ -61,12 +54,12 @@ public:
         delete[] data;
     }
 
-    TData operator[](unsigned int index) const
+    constexpr TData operator[](unsigned int index) const
     {
         return data[index];
     }
 
-    TData& operator[](unsigned int index)
+    constexpr TData& operator[](unsigned int index)
     {
         return data[index];
     }
@@ -78,7 +71,7 @@ public:
     }
 
     template <typename TVecLike>
-    Vector<size, TData>& operator=(const TVecLike& other)
+    constexpr Vector<size, TData>& operator=(const TVecLike& other)
     {
         for (unsigned int i = 0; i < size; i++) {
             data[i] = other[i];
@@ -88,9 +81,18 @@ public:
     }
 };
 
-template <typename TVec>
-auto SUM(const TVec& vec)
+template <typename TVector, typename TMaybeData>
+struct IsDataOfVectorKind {
+    static constexpr bool value = std::is_same<typename TVector::data_type, TMaybeData>::value;
+};
+
+template <
+    typename TVec,
+    unsigned int size = TVec::size
+    >
+constexpr auto SUM(const TVec& vec)
 {
+    static_assert(size> 0,"Sum of a vector is only defined if the dimension of the vector is larger then 0");
     auto cache = vec[0];
     for (unsigned int i = 1; i < vec.size; i++) {
         cache += vec[i];
@@ -98,9 +100,10 @@ auto SUM(const TVec& vec)
     return cache;
 }
 
-template <typename TVec>
-auto MAX(const TVec& vec)
+template <typename TVec,unsigned int size = TVec::size>
+constexpr auto MAX(const TVec& vec)
 {
+    static_assert(size> 0,"Max of a vector is only defined if the dimension of the vector is larger then 0");
     auto cache = vec[0];
     for (unsigned int i = 1; i < vec.size; i++) {
         if (cache < vec[i]) {
@@ -110,14 +113,23 @@ auto MAX(const TVec& vec)
     return cache;
 }
 
-template <typename TVec>
-auto MAX(const TVec left, const TVec right)
+template <
+    typename TLeft,
+    typename TRight,
+    typename typeL = typename TLeft::data_type,
+    typename typeR = typename TRight::data_type,
+    typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
+    unsigned int sizeL = TLeft::size,
+    unsigned int sizeR = TRight::size,
+    typename = typename std::enable_if_t<sizeL==sizeR>
+    >
+constexpr auto MAX(const TLeft left, const TRight right)
 {
     return VectorMax(left, right);
 }
 
 template <typename TVector>
-class VectorNegative {
+class VectorNegative final {
 private:
     const TVector& v;
 
@@ -130,14 +142,14 @@ public:
     {
     }
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return -v[index];
     }
 };
 
 template <typename TVector, typename TConstant,typename TOperator>
-class VectorConstantOperation {
+class VectorConstantOperation final{
 private:
     const TVector& v;
     const TConstant c;
@@ -157,21 +169,21 @@ public:
     {
     }
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return op(v[index] , c);
     }
 };
 
 template <typename TLeft, typename TRight>
-class VectorSum {
+class VectorSum final{
 private:
     const TLeft& v1;
     const TRight& v2;
 
 public:
     static constexpr unsigned int size = TLeft::size;
-    using data_type = decltype(v1[0]);
+    using data_type = typename TLeft::data_type;
 
     VectorSum(
         const TLeft& v1,
@@ -181,21 +193,21 @@ public:
     {
     }
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return v1[index] + v2[index];
     }
 };
 
 template <typename TLeft, typename TRight>
-class VectorProd {
+class VectorProd final {
 private:
     const TLeft& v1;
     const TRight& v2;
 
 public:
     static constexpr unsigned int size = TLeft::size;
-    using data_type = decltype(v1[0]);
+    using data_type = typename TLeft::data_type;
 
     VectorProd(
         const TLeft& v1,
@@ -205,21 +217,21 @@ public:
     {
     }
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return v1[index] * v2[index];
     }
 };
 
 template <typename TLeft, typename TRight>
-class VectorMax {
+class VectorMax final {
 private:
     const TLeft& v1;
     const TRight& v2;
 
 public:
     static constexpr unsigned int size = TLeft::size;
-    using data_type = decltype(v1[0]);
+    using data_type = typename TLeft::data_type;
 
     VectorMax(
         const TLeft& v1,
@@ -229,7 +241,7 @@ public:
     {
     }
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return v1[index] < v2[index]
             ? v2[index]
@@ -238,19 +250,14 @@ public:
 };
 
 template <typename TVec>
-VectorNegative<TVec> operator-(const TVec& vec)
+constexpr auto operator-(const TVec& vec)
 {
     return VectorNegative<TVec>(vec);
 }
 
-template <typename TVector, typename TMaybeData>
-struct IsDataOfVectorKind {
-    static constexpr bool value = std::is_same<typename TVector::data_type, TMaybeData>::value;
-};
-
 template<typename TData>
 struct MulOperation{
-    auto operator()(TData x,TData y) const
+    constexpr auto operator()(TData x,TData y) const
     {
         return x * y;
     }
@@ -258,7 +265,7 @@ struct MulOperation{
 
 template<typename TData>
 struct AddOperation{
-    auto operator()(TData x,TData y) const
+    constexpr auto operator()(TData x,TData y) const
     {
         return x + y;
     }
@@ -269,8 +276,8 @@ template <
     typename TLeft,
     typename TRight,
     typename = typename TLeft::data_type,
-    typename = typename std::enable_if<IsDataOfVectorKind<TLeft, TRight>::value>::type>
-auto operator+(
+    typename = typename std::enable_if_t<IsDataOfVectorKind<TLeft, TRight>::value>>
+constexpr auto operator+(
     const TLeft& left,
     const TRight right)
 {
@@ -284,8 +291,8 @@ template <
     typename TLeft,
     typename TRight,
     typename = typename TRight::data_type,
-    typename = typename std::enable_if<IsDataOfVectorKind<TRight, TLeft>::value>::type>
-auto operator+(
+    typename = typename std::enable_if_t<IsDataOfVectorKind<TRight, TLeft>::value>>
+constexpr auto operator+(
     const TLeft left,
     const TRight& right)
 {
@@ -299,7 +306,7 @@ template <
     typename TLeft,
     typename TRight,
     typename = typename TLeft::data_type,
-    typename = typename std::enable_if<IsDataOfVectorKind<TLeft, TRight>::value>::type>
+    typename = typename std::enable_if_t<IsDataOfVectorKind<TLeft, TRight>::value>>
 auto operator*(
     const TLeft& left,
     const TRight right)
@@ -314,8 +321,8 @@ template <
     typename TLeft,
     typename TRight,
     typename = typename TRight::data_type,
-    typename = typename std::enable_if<IsDataOfVectorKind<TRight, TLeft>::value>::type>
-auto operator*(
+    typename = typename std::enable_if_t<IsDataOfVectorKind<TRight, TLeft>::value>>
+constexpr auto operator*(
     const TLeft left,
     const TRight& right)
 {
@@ -339,12 +346,12 @@ template <
     typename TRight,
     typename typeL = typename TLeft::data_type,
     typename typeR = typename TRight::data_type,
-    typename = typename std::enable_if<std::is_same<typeL, typeR>::value>::type,
+    typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
     unsigned int sizeL = TLeft::size,
     unsigned int sizeR = TRight::size,
-    typename = typename std::enable_if<sizeL==sizeR>::type
+    typename = typename std::enable_if_t<sizeL==sizeR>
     >
-auto operator+(
+constexpr auto operator+(
     const TLeft& left,
     const TRight& right)
 {
@@ -356,28 +363,32 @@ template <
     typename TRight,
     typename typeL = typename TLeft::data_type,
     typename typeR = typename TRight::data_type,
-    typename = typename std::enable_if<std::is_same<typeL, typeR>::value>::type,
+    typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
     unsigned int sizeL = TLeft::size,
     unsigned int sizeR = TRight::size,
-    typename = typename std::enable_if<sizeL==sizeR>::type
+    typename = typename std::enable_if_t<sizeL==sizeR>
     >
-auto operator*(
+constexpr auto operator*(
     const TLeft& left,
     const TRight& right)
 {
     return SUM(VectorProd<TLeft, TRight>(left, right));
 }
 
-class ToVector {
+class ToVector final {
 };
 
-template <typename TLeft>
-auto operator|(
+template <
+    typename TLeft,
+    typename data_type = typename TLeft::data_type,
+    unsigned int size = TLeft::size
+    >
+constexpr auto operator|(
     const TLeft& left,
     const ToVector& right)
 {
-    auto vec = Vector<TLeft::size, decltype(left[0])>();
-    for (unsigned int i = 0; i < TLeft::size; i++) {
+    auto vec = Vector<size, data_type>();
+    for (unsigned int i = 0; i < size; i++) {
         vec[i] = left[i];
     }
 
@@ -385,7 +396,7 @@ auto operator|(
 }
 
 template <typename TLeft, typename TRight>
-class VectorComponentMax {
+class VectorComponentMax final {
 private:
     const TLeft& v1;
     const TRight& v2;
@@ -402,14 +413,20 @@ public:
     {
     }
 
-    auto operator[](unsigned int index) const
+    constexpr auto operator[](unsigned int index) const
     {
         return v1[index] > v2[index] ? v1[index] : v2[index];
     }
 };
 
-template <typename TLeft, typename TRight>
-auto ComponentWiseMax(
+template <
+    typename TLeft,
+    typename TRight,
+    unsigned int left_size = TLeft::size,
+    unsigned int right_size = TRight::size,
+    typename = typename std::enable_if_t<left_size==right_size>
+    >
+constexpr auto ComponentWiseMax(
     const TLeft& left,
     const TRight& right)
 {
@@ -417,7 +434,7 @@ auto ComponentWiseMax(
 }
 
 template <typename TVector>
-auto Norm(TVector& v)
+constexpr auto Norm(TVector& v)
 {
     return SUM(v * v);
 }
