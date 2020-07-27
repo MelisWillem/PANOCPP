@@ -11,40 +11,38 @@ public:
         const double lipschitz_safetyValue; // default in C# is: 1e-6
         const double minimum_delta;         // default in C# is: 1e-12
     };
-    static constexpr auto default_config() -> Config
-    {
-        return  Config{
-            1e-6,
-            1e-12
+    static constexpr Config default_config =
+        {
+            1e-6, // lipschitz_safetyValue
+            1e-12 // minimum_delta
         };
-    }
 
-    //Estimate the lipschitz constant by using the numerical hessian as an estimation
-    //  Theorem:
+    // Estimate the lipschitz constant by using the numerical hessian as an estimation
+    //   Theorem:
     //      ||gradient(x)|| < B
     //       f is B-lipschitz
     template<
         typename TVector,
+        typename data_type = typename TVector::data_type,
         typename TCostFunction,
         typename TConfig
             >
-    static auto estimate(
-        const Location<TVector>& position,
+    static data_type estimate(
+        const Location<TVector>& location,
         const TConfig& config,
         const TCostFunction cost_function)
     {
-        // find delta= max{small number,10^{-6}*u_0}
+        // Find delta= max{small number,10^{-6}*u_0}
         auto delta = ComponentWiseMax(
-                (config.lipschitz_safetyValue*position.location),
+                (config.lipschitz_safetyValue*location.location),
                 pnc::VectorUnit<2,double>(config.minimum_delta));
 
-        // atm we are allocating a new vector, each time we estimate.
-        // TODO remove this so we reuse some memory, and don't allocate here
+        // This vector could be moved in, and moved back out, something to look into
+        auto newLocation = Vector<TVector::size,data_type>() ;
+        newLocation = location.location + delta;
+        auto newPosition = cost_function(newLocation);
 
-        auto newPosition = cost_function(position.location + delta);
-        auto deltaNorm = delta*delta;
-
-        return 0;
+        return (newPosition.location*newPosition.location)/(delta*delta);
     }
 };
 }

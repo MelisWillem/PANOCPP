@@ -6,7 +6,7 @@ namespace test {
     // Evaluates the value and the gradient of a polynomial of a certain
     // degree.
     template <int degree, int dimension>
-    auto poly(const Vector<dimension, double>&& position)
+    auto poly(Vector<dimension, double>& position)
     {
         using Vec = Vector<dimension, double>;
         // return const + gradient

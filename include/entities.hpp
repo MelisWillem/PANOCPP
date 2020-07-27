@@ -1,3 +1,4 @@
+#include<utility>
 #include<variant>
 namespace pnc {
 
@@ -8,13 +9,10 @@ template <
 class Location {
 public:
     Location(TVector&& location, TVector&& gradient,TConstant cost ): 
-        location(std::forward(location)),
-        gradient(std::forward(gradient)),
+        location(std::forward<TVector>(location)),
+        gradient(std::forward<TVector>(gradient)),
         cost(cost)
     {
-        this->location = location;
-        this->gradient = gradient;
-        this->cost = cost;
     }
 
     const TVector location;
@@ -32,7 +30,6 @@ class ProxLocation : public Location<TVector>{
                 std::forward(gradient),
                 cost)
     {
-        this->gamma=gamma;
     }
     const TConstant gamme;
 };

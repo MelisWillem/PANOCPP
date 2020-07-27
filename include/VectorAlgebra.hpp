@@ -38,7 +38,7 @@ public:
     {
     }
 
-    template<typename ...TArgs>
+    template<typename ...TArgs,typename = typename std::enable_if_t<size==sizeof...(TArgs)>>
     Vector(TArgs... args)
         : data(new TData[TSize]{args...})
     {
@@ -73,6 +73,9 @@ public:
     template <typename TVecLike>
     constexpr Vector<size, TData>& operator=(const TVecLike& other)
     {
+        static_assert(
+                size == TVecLike::size,
+                "Trying to assign vector expression to a vector of a different dimension");
         for (unsigned int i = 0; i < size; i++) {
             data[i] = other[i];
         }
