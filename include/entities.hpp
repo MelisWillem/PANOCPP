@@ -1,6 +1,10 @@
 #include<utility>
 #include<variant>
+
 namespace pnc {
+
+template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 template <
     typename TVector,
@@ -15,9 +19,9 @@ public:
     {
     }
 
-    const TVector location;
-    const TVector gradient;
-    const TConstant cost;
+    TVector location;
+    TVector gradient;
+    TConstant cost;
 };
 
 template <
@@ -26,12 +30,12 @@ template <
     >
 class ProxLocation : public Location<TVector>{
     ProxLocation (TVector&& location, TVector&& gradient, TConstant cost,TConstant gamma) :
-        Location<TVector>(   std::forward(location),
+        Location<TVector>(std::forward(location),
                 std::forward(gradient),
-                cost)
+                cost),gamma(gamma)
     {
     }
-    const TConstant gamme;
+    TConstant gamma;
 };
 
 // A location is either

@@ -8,14 +8,17 @@ namespace pnc {
 class LipschitzEstimator {
 public:
     struct Config {
+        // The lipschitz value is estimated over an delta of:
+        // delta= max{MinimumDelta,LipschitzSafetyValue*u_0}
+        
         const double lipschitz_safetyValue; // default in C# is: 1e-6
         const double minimum_delta;         // default in C# is: 1e-12
     };
     static constexpr Config default_config =
-        {
-            1e-6, // lipschitz_safetyValue
-            1e-12 // minimum_delta
-        };
+    {
+        1e-6, // lipschitz_safetyValue
+        1e-12 // minimum_delta
+    };
 
     // Estimate the lipschitz constant by using the numerical hessian as an estimation
     //   Theorem:
