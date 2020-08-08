@@ -4,8 +4,10 @@
 #include <string>
 #include <type_traits>
 #include <stdlib.h>
+#include <utility>
 
 namespace pnc {
+
 template <unsigned int TSize, typename TData = double>
 class VectorUnit final {
 private:
@@ -15,7 +17,7 @@ public:
     static constexpr unsigned int size = TSize;
     using data_type = TData;
 
-    VectorUnit(TData constant): constant(constant)
+    explicit VectorUnit(TData constant): constant(constant)
     {}
 
     constexpr auto operator[](unsigned int index) const
@@ -28,6 +30,7 @@ template <unsigned int TSize, typename TData = double>
 class Vector final{
 private:
     TData* data;
+    bool is_moved = false;
 
 public:
     static constexpr unsigned int size = TSize;
@@ -56,11 +59,13 @@ public:
 
     constexpr TData operator[](unsigned int index) const
     {
+        assert(!IsMoved());
         return data[index];
     }
 
     constexpr TData& operator[](unsigned int index)
     {
+        assert(!IsMoved());
         return data[index];
     }
 
@@ -68,6 +73,7 @@ public:
         : data(other.data)
     {
         other.data = {};
+        other.is_moved = true;
     }
 
     template <typename TVecLike>
@@ -76,11 +82,17 @@ public:
         static_assert(
                 size == TVecLike::size,
                 "Trying to assign vector expression to a vector of a different dimension");
+        assert(!IsMoved());
         for (unsigned int i = 0; i < size; i++) {
             data[i] = other[i];
         }
 
         return *this;
+    }
+
+    bool IsMoved() const 
+    {
+        return is_moved;
     }
 };
 
@@ -103,7 +115,10 @@ constexpr auto SUM(const TVec& vec)
     return cache;
 }
 
-template <typename TVec,unsigned int size = TVec::size>
+template <
+    typename TVec,
+    unsigned int size = TVec::size
+    >
 constexpr auto MAX(const TVec& vec)
 {
     static_assert(size> 0,"Max of a vector is only defined if the dimension of the vector is larger then 0");
@@ -131,17 +146,20 @@ constexpr auto MAX(const TLeft left, const TRight right)
     return VectorMax(left, right);
 }
 
-template <typename TVector>
+template < 
+    typename TVectorRef,
+    typename TVector = typename std::remove_reference_t<TVectorRef>
+    >
 class VectorNegative final {
 private:
-    const TVector& v;
+    TVectorRef v;
 
 public:
     static constexpr unsigned int size = TVector::size;
-    using data_type = decltype(v[0]);
+    using data_type = typename TVector::data_type;
 
-    VectorNegative(const TVector& v)
-        : v(v)
+    explicit VectorNegative(TVectorRef&& v)
+        : v(std::forward<TVectorRef>(v))
     {
     }
 
@@ -151,22 +169,27 @@ public:
     }
 };
 
-template <typename TVector, typename TConstant,typename TOperator>
+template <
+    typename TVectorRef,
+    typename TConstant,
+    typename TOperator,
+    typename TVector = std::remove_reference_t<TVectorRef>
+    >
 class VectorConstantOperation final{
 private:
-    const TVector& v;
-    const TConstant c;
+    TVectorRef v;
+    TConstant c;
 
 public:
     static constexpr unsigned int size = TVector::size;
     using data_type = typename TVector::data_type;
     TOperator op;
 
-    VectorConstantOperation(
-        const TVector& v,
-        const TConstant c,
+    explicit VectorConstantOperation(
+        TVectorRef&& v,
+        TConstant c,
         TOperator op)
-        : v(v)
+        : v(std::forward<TVectorRef>(v))
         , c(c)
         , op(op)
     {
@@ -181,18 +204,18 @@ public:
 template <typename TLeft, typename TRight>
 class VectorSum final{
 private:
-    const TLeft& v1;
-    const TRight& v2;
+    const TLeft v1;
+    const TRight v2;
 
 public:
-    static constexpr unsigned int size = TLeft::size;
-    using data_type = typename TLeft::data_type;
+    static constexpr unsigned int size = std::remove_reference_t<TLeft>::size;
+    using data_type = typename std::remove_reference_t<TLeft>::data_type;
 
-    VectorSum(
-        const TLeft& v1,
-        const TRight& v2)
-        : v1(v1)
-        , v2(v2)
+    explicit VectorSum(
+        TLeft&& left,
+        TRight&& right)
+        : v1(std::forward<TLeft>(left))
+        , v2(std::forward<TRight>(right))
     {
     }
 
@@ -202,21 +225,26 @@ public:
     }
 };
 
-template <typename TLeft, typename TRight>
+template <
+    typename TLeftRef,
+    typename TRightRef,
+    typename TLeft = typename std::remove_reference_t<TLeftRef>,
+    typename TRight = typename std::remove_reference_t<TRightRef>
+    >
 class VectorProd final {
 private:
-    const TLeft& v1;
-    const TRight& v2;
+    TLeftRef v1;
+    TRightRef v2;
 
 public:
     static constexpr unsigned int size = TLeft::size;
     using data_type = typename TLeft::data_type;
 
-    VectorProd(
-        const TLeft& v1,
-        const TRight& v2)
-        : v1(v1)
-        , v2(v2)
+    explicit VectorProd(
+        TLeftRef&& left,
+        TRightRef&& right)
+        : v1(std::forward<TLeftRef>(left))
+        , v2(std::forward<TRightRef>(right))
     {
     }
 
@@ -226,21 +254,26 @@ public:
     }
 };
 
-template <typename TLeft, typename TRight>
+template <
+    typename TLeftRef,
+    typename TRightRef,
+    typename TLeft = typename std::remove_reference_t<TLeftRef>,
+    typename TRight = typename std::remove_reference_t<TRightRef>
+    >
 class VectorMax final {
 private:
-    const TLeft& v1;
-    const TRight& v2;
+    const TLeftRef v1;
+    const TRightRef v2;
 
 public:
     static constexpr unsigned int size = TLeft::size;
     using data_type = typename TLeft::data_type;
 
-    VectorMax(
-        const TLeft& v1,
-        const TRight& v2)
-        : v1(v1)
-        , v2(v2)
+    explicit VectorMax(
+        TLeftRef&& v1,
+        TRightRef&& v2)
+        : v1(std::forward<TLeftRef>(v1))
+        , v2(std::forward<TRightRef>(v2))
     {
     }
 
@@ -252,10 +285,10 @@ public:
     }
 };
 
-template <typename TVec>
-constexpr auto operator-(const TVec& vec)
+template <typename TVecRef, typename TVec = std::remove_reference_t<TVecRef>>
+constexpr auto operator-(TVecRef&& vec)
 {
-    return VectorNegative<TVec>(vec);
+    return VectorNegative<TVecRef>(std::forward<TVecRef>(vec));
 }
 
 template<typename TData>
@@ -276,77 +309,83 @@ struct AddOperation{
 
 // vector + constant
 template <
-    typename TLeft,
+    typename TLeftRef,
     typename TRight,
+    typename TLeft = typename std::remove_reference_t<TLeftRef>,
     typename = typename TLeft::data_type,
     typename = typename std::enable_if_t<IsDataOfVectorKind<TLeft, TRight>::value>>
 constexpr auto operator+(
-    const TLeft& left,
-    const TRight right)
+    TLeftRef&& left,
+    TRight right)
 {
     using data_type = typename TLeft::data_type;
-    return VectorConstantOperation<TLeft,TRight,AddOperation<data_type>>
-        (left,right,AddOperation<data_type>());
+    return VectorConstantOperation<TLeftRef,TRight,AddOperation<data_type>>
+        (std::forward<TLeftRef>(left),right,AddOperation<data_type>());
 }
 
 // constant + vector
 template <
     typename TLeft,
-    typename TRight,
+    typename TRightRef,
+    typename TRight = typename std::remove_reference_t<TRightRef>,
     typename = typename TRight::data_type,
     typename = typename std::enable_if_t<IsDataOfVectorKind<TRight, TLeft>::value>>
 constexpr auto operator+(
-    const TLeft left,
-    const TRight& right)
+    TLeft left,
+    TRightRef&& right)
 {
     using data_type = typename TRight::data_type;
-    return VectorConstantOperation<TRight,TLeft,AddOperation<data_type>>
-        (right,left,AddOperation<data_type>());
+    return VectorConstantOperation<TRightRef,TLeft,AddOperation<data_type>>
+        (std::forward<TRightRef>(right),left,AddOperation<data_type>());
 }
 
 // vector * constant
 template <
-    typename TLeft,
+    typename TLeftRef,
     typename TRight,
+    typename TLeft = std::remove_reference_t<TLeftRef>,
     typename = typename TLeft::data_type,
     typename = typename std::enable_if_t<IsDataOfVectorKind<TLeft, TRight>::value>>
 auto operator*(
-    const TLeft& left,
-    const TRight right)
+    TLeftRef&& left,
+    TRight right)
 {
     using data_type = typename TLeft::data_type;
-    return VectorConstantOperation<TLeft,TRight,MulOperation<data_type>>
-        (left,right,MulOperation<data_type>());
+    return VectorConstantOperation<TLeftRef,TRight,MulOperation<data_type>>
+        (std::forward<TLeftRef>(left),right,MulOperation<data_type>());
 }
 
 // constant * vector
 template <
     typename TLeft,
-    typename TRight,
+    typename TRightRef,
+    typename TRight = std::remove_reference_t<TRightRef>,
     typename = typename TRight::data_type,
     typename = typename std::enable_if_t<IsDataOfVectorKind<TRight, TLeft>::value>>
 constexpr auto operator*(
-    const TLeft left,
-    const TRight& right)
+    TLeft left,
+    TRightRef&& right)
 {
     using data_type = typename TRight::data_type;
-    return VectorConstantOperation<TRight,TLeft,MulOperation<data_type>>
-        (right,left,MulOperation<data_type>());
+    return VectorConstantOperation<TRightRef,TLeft,MulOperation<data_type>>
+        (std::forward<TRightRef>(right),left,MulOperation<data_type>());
 }
 
 template <
     typename TLeft,
     typename TRight>
 auto operator-(
-    const TLeft& left,
-    const TRight& right)
+    TLeft&& left,
+    TRight&& right)
 {
     return left + (-right);
 }
 
 template <
-    typename TLeft,
-    typename TRight,
+    typename TLeftRef,
+    typename TRightRef,
+    typename TRight = std::remove_reference_t<TRightRef>,
+    typename TLeft = std::remove_reference_t<TLeftRef>,
     typename typeL = typename TLeft::data_type,
     typename typeR = typename TRight::data_type,
     typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
@@ -355,15 +394,19 @@ template <
     typename = typename std::enable_if_t<sizeL==sizeR>
     >
 constexpr auto operator+(
-    const TLeft& left,
-    const TRight& right)
+    TLeftRef&& left,
+    TRightRef&& right)
 {
-    return VectorSum<TLeft, TRight>(left, right);
+    return VectorSum<TLeftRef,TRightRef>(
+        std::forward<TLeftRef>(left),
+        std::forward<TRightRef>(right));
 }
 
 template <
-    typename TLeft,
-    typename TRight,
+    typename TLeftRef,
+    typename TRightRef,
+    typename TLeft = typename std::remove_reference_t<TLeftRef>,
+    typename TRight = typename std::remove_reference_t<TRightRef>,
     typename typeL = typename TLeft::data_type,
     typename typeR = typename TRight::data_type,
     typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
@@ -372,14 +415,16 @@ template <
     typename = typename std::enable_if_t<sizeL==sizeR>
     >
 constexpr auto operator*(
-    const TLeft& left,
-    const TRight& right)
+    TLeftRef&& left,
+    TRightRef&& right)
 {
-    return SUM(VectorProd<TLeft, TRight>(left, right));
+    return SUM(
+        VectorProd<TLeftRef, TRightRef>(
+            std::forward<TLeftRef>(left),
+            std::forward<TRightRef>(right)));
 }
 
-class ToVector final {
-};
+class ToVector final{};
 
 template <
     typename TLeft,
@@ -398,21 +443,26 @@ constexpr auto operator|(
     return vec;
 }
 
-template <typename TLeft, typename TRight>
+template <
+    typename TLeftRef,
+    typename TRightRef,
+    typename TLeft = typename std::remove_reference_t<TLeftRef>,
+    typename TRight = typename std::remove_reference_t<TRightRef>
+    >
 class VectorComponentMax final {
 private:
-    const TLeft& v1;
-    const TRight& v2;
+    TLeft v1;
+    TRight v2;
 
 public:
     static constexpr unsigned int size = TLeft::size;
-    using data_type = decltype(v1[0]);
+    using data_type = typename TLeft::data_type;
 
     VectorComponentMax(
-        const TLeft& v1,
-        const TRight& v2)
-        : v1(v1)
-        , v2(v2)
+        TLeftRef&& v1,
+        TRightRef&& v2)
+        : v1(std::forward<TLeftRef>(v1))
+        , v2(std::forward<TRightRef>(v2))
     {
     }
 
@@ -423,23 +473,33 @@ public:
 };
 
 template <
-    typename TLeft,
-    typename TRight,
+    typename TLeftRef,
+    typename TRightRef,
+    typename TLeft = std::remove_reference_t<TLeftRef>,
+    typename TRight = std::remove_reference_t<TRightRef>,
     unsigned int left_size = TLeft::size,
     unsigned int right_size = TRight::size,
     typename = typename std::enable_if_t<left_size==right_size>
     >
 constexpr auto ComponentWiseMax(
-    const TLeft& left,
-    const TRight& right)
+    TLeftRef&& left,
+    TRightRef&& right)
 {
-    return VectorComponentMax<TLeft, TRight>(left, right);
+    return VectorComponentMax<TLeftRef, TRightRef>(
+            std::forward<TLeftRef>(left),
+            std::forward<TRightRef>(right));
 }
 
 template <typename TVector>
 constexpr auto Norm(TVector& v)
 {
     return SUM(v * v);
+}
+
+template <typename TVector>
+constexpr auto Norm2(TVector& v)
+{
+    return sqrt(SUM(v * v));
 }
 
 }

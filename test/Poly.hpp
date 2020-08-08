@@ -4,22 +4,33 @@
 namespace pnc {
 namespace test {
     // Evaluates the value and the gradient of a polynomial of a certain
-    // degree.
-    template <int degree, int dimension>
-    auto poly(Vector<dimension, double>& position)
-    {
-        using Vec = Vector<dimension, double>;
-        // return const + gradient
-        // do we require a move of a vector to put this result in?
-        double cost = 0;
-        Vector<dimension, double> gradient((double*)malloc(sizeof(double) * dimension)); // Start from copy.
-        for (auto i = 0; i < Vec::size; i++) {
-            gradient[i] = (degree)*pow(position[i], (degree - 1));
-            cost += pow(position[i], degree);
+    // degree. Is provided by the user to the api
+    template <
+        int degree,
+        int dimension,
+        typename TInput,
+        typename TOutput
+             >
+    struct Poly{
+        auto operator()(
+                const TInput& position,
+                TOutput& gradient)
+        {
+            using Vec = Vector<dimension, double>;
+
+            double cost = 0;
+            for (auto i = 0; i < Vec::size; i++) {
+                gradient[i] = (degree)*pow(position[i], (degree - 1));
+                cost += pow(position[i], degree);
+            }
+            return cost;
         }
-        return Location<Vec>(std::move(position),std::move(gradient),cost);
-        //return std::make_pair(cost, std::move(gradient));
-        //return std::make_pair(cost, (gradient));// this fails, for some reason he doesn't want to autmatically move
-    }
+    };
+
+    template< int degree, int dimension>
+    struct poly {
+        template<typename TIn,typename TOut>
+        using type = Poly<degree,dimension,TIn,TOut>;
+    };
 }
 }

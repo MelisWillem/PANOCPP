@@ -12,6 +12,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     MESSAGE("using clang compiler -> setting c++ version to 17")
     SET (CMAKE_CXX_FLAGS "-Wall -std=c++17")
 endif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(MSVC)
+    SET (CMAKE_CXX_FLAGS "/std:c++17")
+endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/lib/catch2")
 include_directories("${CMAKE_SOURCE_DIR}/include")
@@ -28,5 +31,5 @@ if(NOT MSVC)
 endif()
 
 add_test(NAME panocTests COMMAND panocTests)
-add_test(NAME vectorAlgTests COMMAND vectorAlgebraTests)
+add_test(NAME vectorAlgebraTests COMMAND vectorAlgebraTests)
 

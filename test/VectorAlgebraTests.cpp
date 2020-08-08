@@ -77,6 +77,15 @@ TEST_CASE("vector algebra test")
         REQUIRE(res[0]==5);
         REQUIRE(res[1]==8);
     }
+
+    SECTION("Bug in x-y binary operator")
+    {
+        auto x = pnc::Vector<2,int>(1,2);
+        auto y = pnc::Vector<2,int>(3,4);
+        auto res = SUM(y+(-x)); // (3-1) + (4-2) = 2 + 2 = 4
+
+        REQUIRE(res == 4);
+    }
 }
 
 TEST_CASE("Helper methods")

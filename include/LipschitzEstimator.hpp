@@ -3,8 +3,12 @@
 #include "VectorAlgebra.hpp"
 #include <iostream>
 #include "entities.hpp"
+#include "math.h"
+
 namespace pnc {
 
+template< template<typename, typename> typename TCostFunction>
+// -> cost function is passed as type, as the in and output type is unknown
 class LipschitzEstimator {
 public:
     struct Config {
@@ -24,28 +28,32 @@ public:
     //   Theorem:
     //      ||gradient(x)|| < B
     //       f is B-lipschitz
+    // => cache: Memory location used to evaluate slightly deviated cost/gradient,
+    //           -> Assume it's poluted after this call, and do NOT use the content.
+    //           -> This avoids allocating an additional vector that is potentially large.
     template<
         typename TVector,
         typename data_type = typename TVector::data_type,
-        typename TCostFunction,
         typename TConfig
             >
     static data_type estimate(
         const Location<TVector>& location,
         const TConfig& config,
-        const TCostFunction cost_function)
+        TVector& cache)
     {
         // Find delta= max{small number,10^{-6}*u_0}
         auto delta = ComponentWiseMax(
                 (config.lipschitz_safetyValue*location.location),
                 pnc::VectorUnit<2,double>(config.minimum_delta));
 
-        // This vector could be moved in, and moved back out, something to look into
-        auto newLocation = Vector<TVector::size,data_type>() ;
-        newLocation = location.location + delta;
-        auto newPosition = cost_function(newLocation);
+        auto deviated_position = location.location + delta;
+        auto& deviated_gradient = cache;
+        TCostFunction< decltype(deviated_position), decltype(deviated_gradient)> ()
+                (deviated_position, deviated_gradient);
 
-        return (newPosition.location*newPosition.location)/(delta*delta);
+        auto buff = location.gradient-deviated_gradient;
+        return sqrt(buff * buff)/
+            sqrt(delta*delta);
     }
 };
 }

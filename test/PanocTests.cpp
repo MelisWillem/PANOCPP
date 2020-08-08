@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include<catch.hpp>
 
-#include "LischitzEstimatorTests.hpp"
+// First test it's sub parts
+#include"LipschitzEstimatorTests.hpp"
+//#include "ProximalCalculator.hpp"
 //#include"LBFGSTests.hpp"
-//#include"ProximalCalculator.hpp"
