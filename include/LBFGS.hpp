@@ -1,36 +1,34 @@
-﻿#include <memory>
-#include <vector>
+﻿#include<math.h>
+#include<vector>
+#include"VectorAlgebra.hpp"
+
+namespace pnc{
 
 inline int getFloatingIndex(int i,int cursor,int bufferSize) {
     return (cursor - 1 - i + bufferSize) % bufferSize;
 }
 
+template<int buffer_size,typename data_type, int dimension>
 class LBFGS
 {
 private:
-    int _bufferSize;
-    int _dimension;
-    int _cursor = 0;
-    int _activeBufferSize=0;
-    double _hessianEstimate = 0;
+    using Vector = Vector<dimension,data_type>;
+    data_type hessian_estimate = 0;
+    unsigned int _cursor = 0;
+    unsigned int _activeBufferSize=0;
 
-    std::unique_ptr<Matrix> _s;
-    std::unique_ptr<Matrix> _y;
-    std::unique_ptr<Vector> _alpha;
-    std::unique_ptr<Vector> _rho;
+    Vector _s[buffer_size + 1]; // saves all the stuff column wise, fortran style
+    Vector _y[buffer_size + 1]; // one element extra used in update
+    data_type _alpha[buffer_size];
+    data_type _rho[buffer_size];
+
 public:
-    inline LBFGS(int bufferSize, int problemDimension)
+    inline constexpr LBFGS()
     {
-        _s = std::make_unique<Matrix>(problemDimension, bufferSize); // one element extra used in update
-        _y = std::make_unique<Matrix>(problemDimension, bufferSize); // one element extra used in update
-    
-        _bufferSize = bufferSize;
-        _dimension = problemDimension;
-    
         _activeBufferSize = 0;
     }
     
-    inline void solve(
+    inline constexpr void solve(
         const Vector& gradient,
         Vector& outputDirection)
     {
@@ -40,71 +38,73 @@ public:
             return;
         }
 
-        outputDirection = gradient;
-    
-        Vector alpha(_activeBufferSize);
-        Vector rho(_activeBufferSize);
+        outputDirection = gradient*1.0;
         for (int absolute_i = 0; absolute_i < _activeBufferSize; ++absolute_i)
         {
-            unsigned int i = getFloatingIndex(absolute_i, _cursor, _bufferSize);
-    
-            rho(i) = 1/(_s->col(i).dot(_y->col(i)));
-            alpha(i) = rho(i)*(_s->col(i).dot(outputDirection));
-    
-            outputDirection = outputDirection -(alpha(i)*_y->col(i));
+            unsigned int i = getFloatingIndex(absolute_i, _cursor, buffer_size);
+
+            _rho[i] = 1/(_s[i]*_y[i]);
+            _alpha[i] = _rho[i]*(_s[i]*outputDirection);
+
+            outputDirection = outputDirection -(_alpha[i]*_y[i]);
         }
-        
-        outputDirection = outputDirection * _hessianEstimate;
-    
-        double beta;
+
+        outputDirection = outputDirection * hessian_estimate;
+
+        data_type beta;
         for (int absolute_i = _activeBufferSize-1; absolute_i > -1; --absolute_i)
         {
-            unsigned int i = getFloatingIndex(absolute_i, _cursor, _bufferSize);
-    
-            beta = rho(i)*(_y->col(i).dot(outputDirection));
-            outputDirection = outputDirection + (alpha(i)-beta)*_s->col(i);
+            unsigned int i = getFloatingIndex(absolute_i, _cursor, buffer_size);
+
+            beta = _rho[i]*(_y[i]*outputDirection);
+            outputDirection = outputDirection + (_alpha[i]-beta)*_s[i];
         }
-    
+
         outputDirection = -outputDirection;
     }
     
-    inline bool CheckIfValidUpdate(
+    template<typename TVectorS,typename TVectorY>
+    inline constexpr bool CheckIfValidUpdate(
         const Vector& gradientCurrentLocations,
-        const Vector& potentialS,
-        const Vector& potentialY)
+        const TVectorS& potentialS,
+        const TVectorY& potentialY)
     {
         // Theoretical condition:
         // update if (y^Ts)/||s || ^ 2 > epsilon * || grad(x) ||
-        double value = potentialS.dot(potentialY)
-            / potentialS.dot(potentialS);
-    
-        return value > gradientCurrentLocations.norm()*(1e-12);
+        data_type value = (potentialS*potentialY)
+            / (potentialS*potentialS);
+
+        return value > sqrt(Norm(gradientCurrentLocations))*(1e-12);
     }
-    
-    inline bool updateHessian(
+
+    // Update the hessian estimate
+    // -> returns true if hessian was adjusted
+    // -> returns false if carefull update avoided an hessian update
+    inline constexpr bool updateHessian(
         const Vector& currentLocation, 
         const Vector& currentGradient, 
         const Vector& newLocation, 
         const Vector& newGradient)
     {
-        Vector potentialS = newLocation - currentLocation;
-        Vector potentialY = newGradient - currentGradient;
-    
+        auto potentialS = newLocation - currentLocation;
+        auto potentialY = newGradient - currentGradient;
+
         if (this->CheckIfValidUpdate(currentGradient, potentialS, potentialY))
         {
-            _s->col(_cursor) = potentialS;
-            _y->col(_cursor) = potentialY;
+            _s[_cursor] = potentialS;
+            _y[_cursor] = potentialY;
     
-            _hessianEstimate = (potentialS.dot(potentialS))
-                / (potentialS.dot(potentialS));
-    
-            if (_activeBufferSize < _bufferSize)
+            hessian_estimate = (potentialS*potentialY)
+                / (potentialY*potentialY);
+
+            if (_activeBufferSize < buffer_size)
             {
                 _activeBufferSize++;
             }
-            _cursor = (_cursor + 1) % _bufferSize;
+            _cursor = (_cursor + 1) % buffer_size;
             return true;
         }
         return false;
     }
 };
+}
