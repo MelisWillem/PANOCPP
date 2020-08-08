@@ -27,11 +27,11 @@ public:
         1e-15 // min_gamma_value
     }
 
-template<
-     typename TVector,
-     typename TCostFunction, 
-     typename TProximalOperator,
-     typename data_type = typename TVector::data_type
+    template<
+        typename TVector,
+        typename TCostFunction, 
+        typename TProximalOperator,
+        typename data_type = typename TVector::data_type
         >
     static constexpr  ProxLocation<TVector> Calculate(
             const PncLocation<TVector>& current,
