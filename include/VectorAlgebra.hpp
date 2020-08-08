@@ -76,12 +76,15 @@ public:
         other.is_moved = true;
     }
 
-    template <typename TVecLike>
-    constexpr Vector<size, TData>& operator=(const TVecLike& other)
+    template <
+        typename TVecRef,
+        typename TVec = std::remove_reference_t<TVecRef>
+        >
+    constexpr Vector<size, TData>& operator=(TVecRef&& other)
     {
         static_assert(
-                size == TVecLike::size,
-                "Trying to assign vector expression to a vector of a different dimension");
+            size == TVec::size,
+            "Trying to assign vector expression to a vector of a different dimension");
         assert(!IsMoved());
         for (unsigned int i = 0; i < size; i++) {
             data[i] = other[i];
@@ -490,16 +493,23 @@ constexpr auto ComponentWiseMax(
             std::forward<TRightRef>(right));
 }
 
-template <typename TVector>
-constexpr auto Norm(TVector& v)
+template <
+    typename TVector,
+    typename data_type = typename TVector::data_type
+    >
+constexpr data_type Norm(TVector& v)
 {
-    return SUM(v * v);
+    return (v * v);
 }
 
-template <typename TVector>
-constexpr auto Norm2(TVector& v)
+template <
+    typename TVector,
+    typename TSQRT,
+    typename data_type = typename TVector::data_type
+    >
+constexpr auto Norm2(TVector& v,TSQRT sqrtOperator)
 {
-    return sqrt(SUM(v * v));
+    return sqrtOperator(v * v);
 }
 
 }
