@@ -1,0 +1,15 @@
+dist: focal
+  
+install: 
+  - sudo apt-get install ninja-build cmake 
+compiler: 
+  - clang
+
+before_scrip:
+  - mkdir build
+  - cd build
+  - cmake .. -G "Ninja" -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+script:
+  - ninja
+  - ninja test

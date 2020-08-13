@@ -23,7 +23,7 @@ include_directories("${CMAKE_SOURCE_DIR}/include")
 enable_testing()
 
 add_executable(panocTests test/PanocTests.cpp)
-add_executable(vectorAlgTests test/VectorAlgebraTests.cpp)
+add_executable(vectorAlgebraTests test/VectorAlgebraTests.cpp)
 add_executable(proxOperatorTests test/proxOperatorTest.cpp)
 
 if(NOT MSVC)
