@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <stdlib.h>
 #include <utility>
+#include <cstdlib>
 
 namespace pnc {
 
@@ -41,7 +42,10 @@ public:
     {
     }
 
-    template<typename ...TArgs,typename = typename std::enable_if_t<size==sizeof...(TArgs)>>
+    template<
+        typename ...TArgs,
+        typename = typename std::enable_if_t<size==sizeof...(TArgs)>
+            >
     Vector(TArgs... args)
         : data(new TData[TSize]{args...})
     {
@@ -105,10 +109,11 @@ struct IsDataOfVectorKind {
 };
 
 template <
-    typename TVec,
+    typename TVecRef ,
+    typename TVec = std::remove_reference_t<TVecRef>,
     unsigned int size = TVec::size
     >
-constexpr auto SUM(const TVec& vec)
+constexpr auto SUM(TVecRef&& vec)
 {
     static_assert(size> 0,"Sum of a vector is only defined if the dimension of the vector is larger then 0");
     auto cache = vec[0];
@@ -510,6 +515,53 @@ template <
 constexpr auto Norm2(TVector& v,TSQRT sqrtOperator)
 {
     return sqrtOperator(v * v);
+}
+
+template <
+    typename TVecRef,
+    typename TFunc,
+    typename TVec = typename std::remove_reference_t<TVecRef>
+    >
+class VectorMap final {
+private:
+    TVecRef v;
+    TFunc func;
+
+public:
+    static constexpr unsigned int size = TVec::size;
+    using data_type = typename TVec::data_type;
+
+    VectorMap(TVecRef&& v,TFunc func) 
+        : v(std::forward<TVecRef>(v))
+        , func(func)
+    {}
+
+    constexpr auto operator[](unsigned int index) const
+    {
+        return func(v[index]);
+    }
+};
+
+struct AbsOp{
+    template< typename data_type >
+    constexpr auto operator()(data_type x) const
+    {
+        return abs(x);
+    }
+};
+
+template<
+    typename TVectorRef,
+    typename TVector = std::remove_reference_t<TVectorRef>,
+    unsigned int size = TVector::size,
+    typename data_type = typename TVector::data_type
+    >
+constexpr auto NormL1(TVectorRef&& vec) 
+{
+    return SUM(
+        VectorMap<TVectorRef,AbsOp>( // Oddly enough this does not get inferred
+            std::forward<TVectorRef>(vec),
+            AbsOp()));
 }
 
 }

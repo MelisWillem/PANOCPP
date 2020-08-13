@@ -78,7 +78,7 @@ TEST_CASE("vector algebra test")
         REQUIRE(res[1]==8);
     }
 
-    SECTION("Bug in x-y binary operator")
+    SECTION("Bug when combining stuff")
     {
         auto x = pnc::Vector<2,int>(1,2);
         auto y = pnc::Vector<2,int>(3,4);
@@ -91,6 +91,7 @@ TEST_CASE("vector algebra test")
 TEST_CASE("Helper methods")
 {
     auto vec = pnc::Vector<2, double>( 1.0, 2.0 );
+    auto vecWithsign = pnc::Vector<2, double>( -1.0, 2.0 );
 
     SECTION("SUM")
     {
@@ -105,5 +106,13 @@ TEST_CASE("Helper methods")
     SECTION("ToVector")
     {
         auto blah = vec | ToVector();
+    }
+
+    SECTION("L1 norm")
+    {
+        // l1-norm sum(|1|,|2|) = 3
+        auto res = NormL1(vecWithsign);
+
+        REQUIRE(res == 3);
     }
 }

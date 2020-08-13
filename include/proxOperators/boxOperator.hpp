@@ -1,12 +1,7 @@
 #include"VectorAlgebra.hpp"
 #include<type_traits>
 
-// Proximal operator should look like:
-// x_new = prox_op(x_old)
-// This should use the concept of a vector and
-// not the vector itself.
 namespace pnc{
-
 
 // The box operator always returns a vector with
 // elements inside the box borders.
