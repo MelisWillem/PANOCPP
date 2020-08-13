@@ -32,4 +32,5 @@ endif()
 
 add_test(NAME panocTests COMMAND panocTests)
 add_test(NAME vectorAlgebraTests COMMAND vectorAlgebraTests)
+add_test(NAME proxOperatorTests COMMAND proxOperatorTests)
 
