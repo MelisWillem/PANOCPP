@@ -103,11 +103,6 @@ TEST_CASE("Helper methods")
         REQUIRE(MAX(vec) == 2);
     }
 
-    SECTION("ToVector")
-    {
-        auto blah = vec | ToVector();
-    }
-
     SECTION("L1 norm")
     {
         // l1-norm sum(|1|,|2|) = 3
