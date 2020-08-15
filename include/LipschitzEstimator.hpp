@@ -9,7 +9,7 @@ namespace pnc {
 
 template< template<typename, typename> typename TCostFunction>
 // -> cost function is passed as type, as the in and output type is unknown
-class LipschitzEstimator {
+class LipschitzEstimator{
 public:
     struct Config {
         // The lipschitz value is estimated over an delta of:
@@ -33,8 +33,8 @@ public:
     //           -> This avoids allocating an additional vector that is potentially large.
     template<
         typename TVector,
-        typename data_type = typename TVector::data_type,
-        typename TConfig
+        typename TConfig,
+        typename data_type = typename TVector::data_type
             >
     static data_type estimate(
         const Location<TVector>& location,

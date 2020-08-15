@@ -3,19 +3,43 @@
 #include <vector>
 #include "entities.hpp"
 #include "LipschitzEstimator.hpp"
+#include "vectorAlgebra/tostring.hpp"
+#include <iostream>
 
-class ProximalGradientStep
-{
+namespace pnc{
+
+// Contains a proximal gradient step:
+// -. Does not own the vector's itself !
+template<typename TVec>
+struct ProximalGradientStep{
+    ProximalGradientStep(
+            const Location<TVec>& c, 
+            Location<TVec>& p) :
+        current(c),
+        proximal(p) {}
+
+    const Location<TVec>& current;
+    Location<TVec>& proximal;
+
+};
+
+template< 
+    template<typename, typename> typename TCostFunction,
+    typename TProximalOperator
+    >
+class ProximalCalculator{
 public:
+    using Estimator = LipschitzEstimator<TCostFunction>;
+    TProximalOperator prox;
 
     struct Config{
             /// The linesearch condition should be :
             // fNew > f - df.DotProduct(df) 
-            //     + (1 ) / (2 * newLocation.Gamma) * (direction.DotProduct(direction))
+            //     + (1 ) / (2 * new_location.Gamma) * (direction.DotProduct(direction))
             //
             // In reality it is:
             // fNew > f - df.DotProduct(df)
-            //     + (1 - safetyValueLineSearch) / (2 * newLocation.Gamma) * directionSquaredNorm
+            //     + (1 - safetyValueLineSearch) / (2 * new_location.Gamma) * directionSquaredNorm
             //     + 1e-6 * f;
             const double safety_value_line_search;
             // The linesearch parameter gamma can never be smaller then this
@@ -24,81 +48,78 @@ public:
     static constexpr Config default_config =
     {
         0.05, // safety_value_line_search
-        1e-15 // min_gamma_value
-    }
+        10 // min_gamma_value
+    };
+
+    ProximalCalculator(TProximalOperator prox):prox(prox){}
 
     template<
         typename TVector,
-        typename TCostFunction, 
-        typename TProximalOperator,
         typename data_type = typename TVector::data_type
         >
-    static constexpr  ProxLocation<TVector> Calculate(
-            const PncLocation<TVector>& current,
-            ProxLocation<TVector>&& newLocatoin, // this is returned
-            TCostFunction func,
-            TProximalOperator prox,
-            Config config)
+    ProximalGradientStep<TVector>  Calculate(
+            ProximalGradientStep<TVector> step,
+            const Config config)  
     {
-        // Estimate gamma if their is no estimation from a previous run.
-        data_type gamma = std::visit(overloaded{
-                [](Location<TVector> loc) {
-                return LipschitzEstimator
-                    .estimate(loc,LipschitzEstimator::default_config,func);
-                },
-                [](ProxLocation<TVector> proxLoc) { return proxLoc.gamma; },
-                },current);
+        TakeProxStep( 
+            step.current,
+            step.current.gamma, 
+            step.proximal); 
 
-        newLocation = TakeProxStep(location,newLocation,func,prox,gamma);
-        while (LinesearchCondition(location,newLocation)
-                && (gamma/2 > config.min)
+        while (!LinesearchCondition(step,config.safety_value_line_search) && 
+                (step.proximal.gamma/data_type{2} > config.min_gamma_value))
         {
-            gamma = gamma/2;
-            newLocation = TakeProxStep(location,newLocation,func,prox,gamma);
+            TakeProxStep(
+                step.current,
+                step.proximal.gamma/data_type{2},
+                step.proximal);
         }
 
-        return newLocation;
+        return step;
     }
     
+private:
+    // use the value of current_location to calculate a
+    // new proximal gradient step.
     template<
         typename TVector,
-        typename data_type = typename TVector::data_type,
-        typename TCostFunction, 
-        typename TProximalOperator,
+        typename data_type = typename TVector::data_type
         >
-    static constexpr ProxLocation TakeProxStep(
+    constexpr void TakeProxStep(
         const Location<TVector>& current,
-        ProxLocation<TVector>&& newLocation,
-        TCostFunction func,
-        TProximalOperator prox,
-        data_type gamma)
+        const data_type gamma,
+        Location<TVector>& proximal) const
     {
-        // Todo : get this to work on lipschitz estimator first
-        // Todo : implement proxbox to see if this works
-        func.evaluate(prox(current.location - gamma*current.gradient),newLocation);
-        return newLocation;
+        proximal.gamma = gamma;
+        proximal.location=prox(current.location - gamma*current.gradient);
+        proximal.cost = TCostFunction<
+            decltype(proximal.location),
+            decltype(proximal.gradient)>()( 
+            proximal.location,
+            proximal.gradient);
     }
     
     template<
         typename TVector,
         typename data_type = typename TVector::data_type
         >
-    static constexpr bool LinesearchCondition(
-            const Location<TVector>& current,
-            const ProxLocation<TVector>& candidate,
-            const data_type safety_value_line_search)
+    constexpr bool LinesearchCondition(
+            const ProximalGradientStep<TVector>& step,
+            const data_type safety_value_line_search)  const
     {
-        auto direction_squared_norm = (current.location - candidate.location)
-            * (current.location - candidate.location);
+        const auto direction_squared_norm = (step.current.location - step.proximal.location)
+            * (step.current.location - step.proximal.location);
 
-        auto f = current.cost;
-        auto df = current.gradient;
-        auto f_new = candidate.cost;
-        auto df_new = candidate.gradient;
+        const auto f = step.current.cost;
+        const auto& df = step.current.gradient;
+        const auto f_new = step.proximal.cost;
+        //const auto& df_new = step.proximal.gradient;
 
-        return fNew > f - df*df
-                + (1 - safety_value_line_search) / (2 * candidate.Gamma) 
+        return f_new > f - df*df
+                + (1 - safety_value_line_search) / (2 * step.proximal.gamma) 
                     * direction_squared_norm
                 + 1e-6 * f;
     }
 };
+
+}

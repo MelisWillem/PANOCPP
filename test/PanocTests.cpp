@@ -2,5 +2,5 @@
 #include<catch.hpp>
 
 #include"LipschitzEstimatorTests.hpp"
-//#include "ProximalCalculator.hpp"
+#include"ProximalGradientTests.hpp"
 #include"LBFGSTests.hpp"
