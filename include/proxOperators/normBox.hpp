@@ -6,9 +6,9 @@ namespace pnc
 {
     template<
         typename TVecRef,
-        typename TVec = std::remove_reference_t<TVecRef>,
-        typename data_type = typename TVec::data_type
-        >
+        typename TVec = typename std::remove_reference_t<TVecRef>,
+        typename data_type = typename TVec::data_type 
+            >
     class NormBoxOperator{
         private: 
             enum State{
@@ -18,9 +18,9 @@ namespace pnc
             };
 
             TVecRef _input;
-            const data_type _offset;
             State _state;
             data_type _cost;
+            data_type offset;
 
             constexpr auto sign(const data_type x) const
             {
@@ -30,15 +30,15 @@ namespace pnc
             }
 
         public:
-            NormBoxOperator(TVecRef&& vec, const data_type offset)
-                : _input(std::forward<TVecRef>(vec)), _offset(offset)
+            NormBoxOperator(TVecRef&& vec,data_type offset)
+                : _input(std::forward<TVecRef>(vec)),offset(offset)
             {
                 auto norml1 = NormL1(vec);
-                if(norml1<_offset)
+                if(norml1<offset)
                 {
                     _state = State::low;
                 }
-                else if( norml1 > 2*_offset)
+                else if( norml1 > 2*offset)
                 {
                     _state = State::high;
                 }
@@ -46,9 +46,10 @@ namespace pnc
                 {
                     _state = State::mid;
                 }
-                _cost = std::max(0,norml1-offset);
+                _cost = std::max(data_type{0},norml1-offset);
             }
 
+            static constexpr int size = TVec::size;
             constexpr auto operator[](const unsigned int index) const
             {
                 switch(_state)
@@ -56,9 +57,9 @@ namespace pnc
                     case State::low:
                         return _input[index];
                     case State::mid:
-                        return sign(_input[index])*_offset;
+                        return sign(_input[index])*offset;
                     case State::high:
-                        return sign(_input[index])*(abs(_input[index])-_offset);
+                        return sign(_input[index])*(abs(_input[index])-offset);
                 }
             }
 
@@ -68,13 +69,21 @@ namespace pnc
             }
     };
 
-    template<
-        typename TVectorRef,
-        typename TVector = std::remove_reference_t<TVectorRef>,
-        typename data_type = typename TVector::data_type
-            >
-    constexpr auto NormBox(TVectorRef&& input, data_type offset)
-    {
-        return NormBoxOperator<TVectorRef>(std::forward<TVectorRef>(input),offset);
-    }
+    template< typename data_type >
+    struct NormBox{
+        const data_type offset;
+        NormBox(data_type offset) : offset(offset)
+        {
+        }
+
+        template<
+            typename TVecRef,
+            typename TVec = std::remove_reference_t<TVecRef>,
+            typename = std::enable_if_t<std::is_same_v<typename TVec::data_type,data_type>>
+                >
+        auto operator()(TVecRef&& vec) const
+        {
+            return NormBoxOperator<TVecRef>(std::forward<TVecRef>(vec),offset);
+        }
+    };
 }

@@ -1,25 +1,54 @@
-#include"ProximalCalculator.h" 
+#include"ProximalCalculator.hpp" 
+#include"proxOperators.hpp"
+#include"LocationBuilder.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include"catch.hpp"
+template<typename TIn,typename TOut>
+using CostFunction = pnc::test::poly<5,2>::type<TIn,TOut>;
 
 TEST_CASE("Polygon test")
 {
     SECTION("2th degree polygon")
     {
-        int number_of_iterations = 99;
-        int degree
+        const int number_of_iterations = 100;
+        const int dimension = 2;
 
-        auto costFunction = pnc::test::poly<2,2>;
-        // The proximal operator == Normbox -> still todo
+        using Vec = pnc::Vector<dimension,double>;
+        using prox = pnc::NormBox<double>;
 
-        auto initial_position = pnc::Vector{0.5,0.5};
-        auto location = costFunction(initial_position);
+        auto initialPosition = Vec{0.5,0.5};
+        auto initialGradient = Vec{};
+        auto initialCost = CostFunction<decltype(initialPosition),decltype(initialGradient)>()
+            (initialPosition,initialGradient);
+        
+        auto solution = pnc::Location<Vec>(
+            Vec(),
+            Vec(),
+            0,
+            0);
+        auto initial_location = pnc::LocationBuilder<Vec,CostFunction>::Build(
+            std::move(initialPosition),
+            std::move(initialGradient),
+            initialCost,
+            solution.location);
 
-        auto testConfig = pnc::LipschitzEstimator::default_config;
+        auto offset = double{2};
+        auto calc = pnc::ProximalCalculator<CostFunction,prox>(prox(offset));
+        for(int i=0;i<number_of_iterations;i++)
+        {
+            auto step = calc.Calculate(
+                pnc::ProximalGradientStep(
+                    initial_location,
+                    solution),
+                decltype(calc)::default_config);
+            initial_location.location = step.proximal.location;
+            initial_location.gradient = step.proximal.gradient;
+            initial_location.gamma = step.proximal.gamma;
+            initial_location.cost = step.proximal.cost;
+        }
 
-        //auto vec = pnc::Vector<1,int>(2);
-        ///REQUIRE(pnc::Box<int,1,3>(vec)[0] == 2);
+        double expected = 0.118816;
+        REQUIRE( std::abs(expected - initial_location.location[0]) < 1e-6);
+        REQUIRE( std::abs(expected - initial_location.location[1]) < 1e-6);
     }
 }
 

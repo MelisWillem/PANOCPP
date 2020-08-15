@@ -17,7 +17,8 @@ TEST_CASE("LipschitzEstimatorTest")
         auto location = pnc::Location<Vec>(
                 std::move(position),
                 std::move(gradient_start_position),
-                location_cost);
+                location_cost,
+                0);// gamma is set to zero, as it doesn't matter to the estimator
 
         auto testConfig = pnc::LipschitzEstimator<costFunction>::default_config;
 
