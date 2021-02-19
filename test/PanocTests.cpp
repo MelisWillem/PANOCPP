@@ -4,3 +4,4 @@
 #include"LipschitzEstimatorTests.hpp"
 #include"ProximalGradientTests.hpp"
 #include"LBFGSTests.hpp"
+#include"FBETests.hpp"

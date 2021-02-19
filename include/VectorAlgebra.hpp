@@ -21,3 +21,5 @@
 
 #include"vectorAlgebra/operators.hpp"
 #include"vectorAlgebra/operations.hpp"
+
+#include"vectorAlgebra/traits.hpp"

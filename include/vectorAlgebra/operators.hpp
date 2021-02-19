@@ -78,6 +78,7 @@ namespace pnc{
     {
         return left + (-right);
     }
+
     template <
         typename TLeftRef,
         typename TRightRef,

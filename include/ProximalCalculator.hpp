@@ -4,6 +4,7 @@
 #include "entities.hpp"
 #include "LipschitzEstimator.hpp"
 #include "vectorAlgebra/tostring.hpp"
+#include "VectorAlgebra.hpp"
 #include <iostream>
 
 namespace pnc{
