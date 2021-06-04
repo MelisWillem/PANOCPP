@@ -62,8 +62,8 @@ public:
         typename TVector,
         typename data_type = typename TVector::data_type
         >
-    ProximalGradientStep<TVector>  Calculate(
-            ProximalGradientStep<TVector> step,
+    ProximalGradientStep<TVector> Calculate(
+            ProximalGradientStep<TVector>&& step,
             const Config config)  
     {
         TakeProxStep( 

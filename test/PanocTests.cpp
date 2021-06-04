@@ -5,3 +5,4 @@
 #include"ProximalGradientTests.hpp"
 #include"LBFGSTests.hpp"
 #include"FBETests.hpp"
+#include"Solver.hpp"

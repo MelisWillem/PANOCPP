@@ -1,12 +1,11 @@
-﻿#include<math.h>
+﻿#pragma once
+
+#include<math.h>
 #include<vector>
 #include"VectorAlgebra.hpp"
 
 namespace pnc{
 
-inline int getFloatingIndex(int i,int cursor,int bufferSize) {
-    return (cursor - 1 - i + bufferSize) % bufferSize;
-}
 
 template<int buffer_size,typename data_type, int dimension>
 class LBFGS
@@ -21,6 +20,10 @@ private:
     Vec _y[buffer_size + 1]; // one element extra used in update
     data_type _alpha[buffer_size];
     data_type _rho[buffer_size];
+
+	static int getFloatingIndex(int i,int cursor,int bufferSize) {
+		return (cursor - 1 - i + bufferSize) % bufferSize;
+	}
 
 public:
     inline constexpr LBFGS()
