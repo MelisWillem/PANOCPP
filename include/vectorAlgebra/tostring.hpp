@@ -2,8 +2,7 @@
 #include<string>
 #include<functional>
 
-template<typename TIn,typename TOut>
-using CostFunction = pnc::test::poly<5,2>::type<TIn,TOut>;
+using CostFunction = pnc::test::Poly<5, 2>;
 
 template<
     typename T,

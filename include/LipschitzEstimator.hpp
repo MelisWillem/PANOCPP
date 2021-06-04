@@ -7,8 +7,6 @@
 
 namespace pnc {
 
-template< template<typename, typename> typename TCostFunction>
-// -> cost function is passed as type, as the in and output type is unknown
 class LipschitzEstimator{
 public:
     struct Config {
@@ -34,12 +32,14 @@ public:
     template<
         typename TVector,
         typename TConfig,
+        typename TCostFunction,
         typename data_type = typename TVector::data_type
             >
     static data_type estimate(
         const Location<TVector>& location,
         const TConfig& config,
-        TVector& cache)
+        TCostFunction& cost_function,
+        TVector& cache) 
     {
         // Find delta= max{small number,10^{-6}*u_0}
         auto delta = ComponentWiseMax(
@@ -48,8 +48,7 @@ public:
 
         auto deviated_position = location.location + delta;
         auto& deviated_gradient = cache;
-        TCostFunction< decltype(deviated_position), decltype(deviated_gradient)> ()
-                (deviated_position, deviated_gradient);
+        cost_function(deviated_position, deviated_gradient);
 
         auto buff = location.gradient-deviated_gradient;
         return sqrt(buff * buff)/

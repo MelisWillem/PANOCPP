@@ -4,17 +4,9 @@ if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
 endif()
 ###
 
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.2)
 project (PANOCPP)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    MESSAGE("using clang compiler -> setting c++ version to 17")
-    SET (CMAKE_CXX_FLAGS "-Wall -std=c++17")
-endif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-if(MSVC)
-    SET (CMAKE_CXX_FLAGS "/std:c++17")
-endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/lib/catch2")
 include_directories("${CMAKE_SOURCE_DIR}/include")
@@ -25,6 +17,10 @@ enable_testing()
 add_executable(panocTests test/PanocTests.cpp)
 add_executable(vectorAlgebraTests test/VectorAlgebraTests.cpp)
 add_executable(proxOperatorTests test/proxOperatorTest.cpp)
+
+set_property(TARGET panocTests PROPERTY CXX_STANDARD 17)
+set_property(TARGET vectorAlgebraTests PROPERTY CXX_STANDARD 17) 
+set_property(TARGET proxOperatorTests PROPERTY CXX_STANDARD 17)
 
 if(NOT MSVC)
     target_link_libraries(panocTests m) # link with the math lib, some toolchains need this

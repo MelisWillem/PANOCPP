@@ -8,11 +8,12 @@ namespace test {
     template <
         auto degree,
         auto dimension,
-        typename TInput,
-        typename TOutput,
         auto weight = 1
              >
     struct Poly{
+        template<
+			typename TInput,
+			typename TOutput>
         auto operator()(
                 const TInput& position,
                 TOutput& gradient)
@@ -27,14 +28,5 @@ namespace test {
             return cost;
         }
     };
-
-    template< auto degree, auto dimension, auto weight = 1>
-    struct poly {
-        template<typename TIn,typename TOut>
-        using type = Poly<degree, dimension, TIn, TOut, weight>;
-    };
-
-    template<int degree, int dimension, int weight = 1>
-    using poly_t = typename poly<degree, dimension, weight>::type;
 }
 }
