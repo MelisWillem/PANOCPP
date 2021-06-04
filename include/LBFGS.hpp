@@ -12,13 +12,13 @@ template<int buffer_size,typename data_type, int dimension>
 class LBFGS
 {
 private:
-    using Vector = Vector<dimension,data_type>;
+    using Vec = Vector<dimension,data_type>;
     data_type hessian_estimate = 0;
     unsigned int _cursor = 0;
     unsigned int _activeBufferSize=0;
 
-    Vector _s[buffer_size + 1]; // saves all the stuff column wise, fortran style
-    Vector _y[buffer_size + 1]; // one element extra used in update
+    Vec _s[buffer_size + 1]; // saves all the stuff column wise, fortran style
+    Vec _y[buffer_size + 1]; // one element extra used in update
     data_type _alpha[buffer_size];
     data_type _rho[buffer_size];
 
@@ -29,8 +29,8 @@ public:
     }
     
     inline constexpr void solve(
-        const Vector& gradient,
-        Vector& outputDirection)
+        const Vec& gradient,
+        Vec& outputDirection)
     {
         if (_activeBufferSize == 0) 
         {
@@ -65,7 +65,7 @@ public:
     
     template<typename TVectorS,typename TVectorY>
     inline constexpr bool CheckIfValidUpdate(
-        const Vector& gradientCurrentLocations,
+        const Vec& gradientCurrentLocations,
         const TVectorS& potentialS,
         const TVectorY& potentialY)
     {
@@ -81,10 +81,10 @@ public:
     // -> returns true if hessian was adjusted
     // -> returns false if carefull update avoided an hessian update
     inline constexpr bool updateHessian(
-        const Vector& currentLocation, 
-        const Vector& currentGradient, 
-        const Vector& newLocation, 
-        const Vector& newGradient)
+        const Vec& currentLocation, 
+        const Vec& currentGradient, 
+        const Vec& newLocation, 
+        const Vec& newGradient)
     {
         auto potentialS = newLocation - currentLocation;
         auto potentialY = newGradient - currentGradient;

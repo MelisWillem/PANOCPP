@@ -2,8 +2,7 @@
 #include"proxOperators.hpp"
 #include"LocationBuilder.hpp"
 
-template<typename TIn,typename TOut>
-using CostFunction = pnc::test::poly<5,2>::type<TIn,TOut>;
+using CostFunction = pnc::test::Poly<5, 2>;
 
 TEST_CASE("Polygon test")
 {
@@ -17,22 +16,24 @@ TEST_CASE("Polygon test")
 
         auto initialPosition = Vec{0.5,0.5};
         auto initialGradient = Vec{};
-        auto initialCost = CostFunction<decltype(initialPosition),decltype(initialGradient)>()
-            (initialPosition,initialGradient);
+        CostFunction cost_function;
+        auto initialCost = cost_function(initialPosition,initialGradient);
         
         auto solution = pnc::Location<Vec>(
             Vec(),
             Vec(),
             0,
             0);
-        auto initial_location = pnc::LocationBuilder<Vec,CostFunction>::Build(
+        auto initial_location = pnc::LocationBuilder<Vec>::Build(
+            cost_function,
             std::move(initialPosition),
             std::move(initialGradient),
             initialCost,
             solution.location);
 
         auto offset = double{2};
-        auto calc = pnc::ProximalCalculator<CostFunction,prox>(prox(offset));
+        prox prox_op = { offset };
+        auto calc = pnc::ProximalCalculator<CostFunction,prox>(cost_function,prox_op );
         for(int i=0;i<number_of_iterations;i++)
         {
             auto step = calc.Calculate(

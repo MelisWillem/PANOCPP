@@ -5,10 +5,11 @@ namespace pnc{
 template<typename TCost, typename TConstraint>
 struct FBE
 {
+    TCost& cost_function_;
     TConstraint& constraint_;
 
-	FBE(TConstraint& constraint)
-        : constraint_(constraint)
+	FBE(TCost& cost_function, TConstraint& constraint)
+        : cost_function_(cost_function),constraint_(constraint)
     {
     }
 
