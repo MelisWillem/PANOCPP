@@ -1,91 +1,100 @@
-#pragma once
+﻿#pragma once
 
 #include <initializer_list>
 
 namespace pnc {
-template <unsigned int TSize, typename TData = double>
-class Vector final {
-private:
-    TData* data;
-    bool is_moved = false;
+	template <unsigned int TSize, typename TData = double>
+	class Vector final {
+	private:
+		TData* data;
+		bool is_moved = false;
 
-public:
-    static constexpr unsigned int size = TSize;
-    using data_type = TData;
+	public:
+		static constexpr unsigned int size = TSize;
+		using data_type = TData;
 
-    Vector()
-        : data(new TData[size] {})
-    {
-    }
+		Vector()
+			: data(new TData[size]{})
+		{
+		}
 
-    template <
-        typename... TArgs,
-        typename = typename std::enable_if_t<size == sizeof...(TArgs)>>
-    Vector(TArgs... args)
-        : data(new TData[TSize] { args... })
-    {
-    }
+		template <
+			typename... TArgs,
+			typename = typename std::enable_if_t<size == sizeof...(TArgs)>>
+			Vector(TArgs... args)
+			: data(new TData[TSize]{ args... })
+		{
+		}
 
-    Vector(std::initializer_list<TData> input)
-        : data(new TData[size] {})
-    {
-        size_t i = 0;
-        for(const auto val : input)
-        {
-            data[i] = val;
-            ++i;
-        }
-    }
+		Vector(std::initializer_list<TData> input)
+			: data(new TData[size]{})
+		{
+			size_t i = 0;
+			for (const auto val : input)
+			{
+				data[i] = val;
+				++i;
+			}
+		}
 
-    Vector(TData init[size])
-        : data(init)
-    {
-    }
+		Vector(TData init[size])
+			: data(init)
+		{
+		}
 
-    ~Vector()
-    {
-        delete[] data;
-    }
+		Vector(const Vector<size, data_type>& other) :
+			data(new data_type[size]{})
+		{
+			for (int i = 0; i < size; ++i)
+			{
+				data[i] = other[i];
+			}
+		}
 
-    constexpr TData operator[](unsigned int index) const
-    {
-        assert(!IsMoved());
-        return data[index];
-    }
+		~Vector()
+		{
+			delete[] data;
+		}
 
-    constexpr TData& operator[](unsigned int index)
-    {
-        assert(!IsMoved());
-        return data[index];
-    }
+		constexpr TData operator[](unsigned int index) const
+		{
+			assert(!IsMoved());
+			return data[index];
+		}
 
-    Vector(Vector&& other)
-        : data(other.data)
-    {
-        other.data = {};
-        other.is_moved = true;
-    }
+		constexpr TData& operator[](unsigned int index)
+		{
+			assert(!IsMoved());
+			return data[index];
+		}
 
-    template <
-        typename TVecRef,
-        typename TVec = std::remove_reference_t<TVecRef>>
-    constexpr Vector<size, TData>& operator=(TVecRef&& other)
-    {
-        static_assert(
-            size == TVec::size,
-            "Trying to assign vector expression to a vector of a different dimension");
-        assert(!IsMoved());
-        for (unsigned int i = 0; i < size; i++) {
-            data[i] = other[i];
-        }
+		Vector(Vector&& other)
+			: data(other.data)
+		{
+			other.data = {};
+			other.is_moved = true;
+		}
 
-        return *this;
-    }
+		template <
+			typename TVecRef,
+			typename TVec = std::remove_reference_t<TVecRef>>
+			constexpr Vector<size, TData>& operator=(TVecRef&& other)
+		{
+			static_assert(
+				size == TVec::size,
+				"Trying to assign vector expression to a vector of a different dimension");
+			assert(!IsMoved());
+			for (unsigned int i = 0; i < size; i++) {
+				data[i] = other[i];
+			}
 
-    bool IsMoved() const
-    {
-        return is_moved;
-    }
-};
+			return *this;
+		}
+
+		bool IsMoved() const
+		{
+			return is_moved;
+		}
+	};
 
 }

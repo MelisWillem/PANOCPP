@@ -26,12 +26,23 @@ private:
 	}
 
 public:
-    inline constexpr LBFGS()
+    inline LBFGS()
     {
         _activeBufferSize = 0;
     }
+
+    inline bool hasCache()
+    {
+        return _activeBufferSize != 0;
+    }
+
+    inline void Reset()
+    {
+        _activeBufferSize = 0; 
+        _cursor = 0;
+    }
     
-    inline constexpr void solve(
+    inline void solve(
         const Vec& gradient,
         Vec& outputDirection)
     {
@@ -67,7 +78,7 @@ public:
     }
     
     template<typename TVectorS,typename TVectorY>
-    inline constexpr bool CheckIfValidUpdate(
+    inline bool CheckIfValidUpdate(
         const Vec& gradientCurrentLocations,
         const TVectorS& potentialS,
         const TVectorY& potentialY)
@@ -83,7 +94,7 @@ public:
     // Update the hessian estimate
     // -> returns true if hessian was adjusted
     // -> returns false if carefull update avoided an hessian update
-    inline constexpr bool updateHessian(
+    inline bool updateHessian(
         const Vec& currentLocation, 
         const Vec& currentGradient, 
         const Vec& newLocation, 

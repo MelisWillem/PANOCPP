@@ -17,7 +17,7 @@ struct FBE
     // Matlab cache.FBE = cache.fx + cache.gz - cache.gradfx(:)'*cache.FPR(:)
     // + (0.5/gam)*(cache.normFPR^2);
     template<typename TVec, typename TData = typename TVec::data_type>
-    TData Eval(ProximalGradientStep<TVec> step)  const
+    TData Eval(ProximalGradientStep<TVec>& step)  const
     {
         auto direction = step.current.location - step.proximal.location;
         auto gz = constraint_(step.proximal.location).cost(); 
