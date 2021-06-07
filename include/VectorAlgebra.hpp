@@ -22,4 +22,6 @@
 #include"vectorAlgebra/operators.hpp"
 #include"vectorAlgebra/operations.hpp"
 
+#include"vectorAlgebra/infNorm.hpp"
+
 #include"vectorAlgebra/traits.hpp"

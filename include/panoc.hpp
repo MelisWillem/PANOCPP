@@ -29,8 +29,7 @@ namespace pnc {
 			prox_calc_(cost_function_, prox_),
 			fbe_(cost_function, prox_),
 			accelerator_()
-		{
-		}
+		{}
 
 		template<typename TVec>
 		void Solve(TVec& vector)
@@ -68,7 +67,7 @@ namespace pnc {
 					std::swap(current, proximal);
 					prox_calc_.Calculate(current, proximal, decltype(prox_calc_)::default_config);
 					fbe = fbe_.Eval(current, proximal);
-					// todo:: do we need to set the res here???
+					residual = ResidualInfNorm(current, proximal);
 				}
 
 				// This update doesn't always mean that the cache will be updated,
@@ -83,10 +82,11 @@ namespace pnc {
 		}
 
 		template<typename TVec>
-		double ResidualInfNorm(TVec vec)
+		double ResidualInfNorm(const Location<TVec>& current,const Location<TVec>& proximal)
 		{
-			return 0;
+			return InfNorm((current.location - proximal.location) * (1/proximal.gamma));
 		}
+
 
 		// return {residual, fbe}
 		template<typename TVec>
@@ -103,7 +103,6 @@ namespace pnc {
 			{
 				Location<TVec> potential_new_location;
 				Location<TVec> potential_new_prox_location;
-
 				// Take a step away from the current location, using part proximal
 				// and part the accerator.
 				potential_new_location.location = current.location
@@ -120,7 +119,7 @@ namespace pnc {
 				if (new_fbe < fbe)
 				{
 					// Accept potential new location/prox_location
-					const auto res = ResidualInfNorm(potential_new_prox_location);
+					const auto res = ResidualInfNorm(potential_new_location, potential_new_prox_location);
 					std::swap(potential_new_location, current); 
 					std::swap(potential_new_prox_location, proximal); 
 					return { res,new_fbe };
@@ -131,7 +130,7 @@ namespace pnc {
 			auto prox_config = decltype(prox_calc_)::default_config;
 			std::swap(current, proximal); // Take a pure prox step.
 			prox_calc_.Calculate(current,proximal, prox_config);
-			const double res = ResidualInfNorm(proximal);
+			const double res = ResidualInfNorm(current, proximal);
 			const double new_fbe = fbe_.Eval(current, proximal);
 			return { res, new_fbe };
 		}
