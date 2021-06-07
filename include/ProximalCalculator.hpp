@@ -62,25 +62,24 @@ namespace pnc {
 				typename TVector,
 				typename data_type = typename TVector::data_type
 			>
-				ProximalGradientStep<TVector> Calculate(
-					ProximalGradientStep<TVector>&& step,
+				void Calculate(
+					const Location<TVector>& current,
+					Location<TVector>& proximal,
 					const Config config)
 			{
 				TakeProxStep(
-					step.current,
-					step.current.gamma,
-					step.proximal);
+					current,
+					current.gamma,
+					proximal);
 
-				while (!LinesearchCondition(step, config.safety_value_line_search) &&
-					(step.proximal.gamma / data_type{ 2 } > config.min_gamma_value))
+				while (!LinesearchCondition(current, proximal, config.safety_value_line_search) &&
+					(proximal.gamma / data_type{ 2 } > config.min_gamma_value))
 				{
 					TakeProxStep(
-						step.current,
-						step.proximal.gamma / data_type{ 2 },
-						step.proximal);
+						current,
+						proximal.gamma / data_type{ 2 },
+						proximal);
 				}
-
-				return step;
 			}
 
 		private:
@@ -107,19 +106,20 @@ namespace pnc {
 				typename data_type = typename TVector::data_type
 			>
 				bool LinesearchCondition(
-					const ProximalGradientStep<TVector>& step,
+					const Location<TVector>& current,
+					const Location<TVector>& proximal,
 					const data_type safety_value_line_search)  const
 			{
-				const auto direction_squared_norm = (step.current.location - step.proximal.location)
-					* (step.current.location - step.proximal.location);
+				const auto direction_squared_norm = (current.location - proximal.location)
+					* (current.location - proximal.location);
 
-				const auto f = step.current.cost;
-				const auto& df = step.current.gradient;
-				const auto f_new = step.proximal.cost;
-				//const auto& df_new = step.proximal.gradient;
+				const auto f = current.cost;
+				const auto& df = current.gradient;
+				const auto f_new = proximal.cost;
+				//const auto& df_new = proximal.gradient;
 
 				return f_new > f - df * df
-					+ (1 - safety_value_line_search) / (2 * step.proximal.gamma)
+					+ (1 - safety_value_line_search) / (2 * proximal.gamma)
 					* direction_squared_norm
 					+ 1e-6 * f;
 			}

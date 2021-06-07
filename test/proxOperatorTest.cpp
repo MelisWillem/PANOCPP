@@ -6,19 +6,19 @@ TEST_CASE("Box test")
 {
     SECTION("inside the box, should stay inside the box")
     {
-        auto vec = pnc::Vector<1,int>(2);
+        pnc::Vector<1,int> vec = {2};
         REQUIRE(pnc::Box<int>(vec, 1, 3)[0] == 2);
     }
 
     SECTION("below the box, should return low border")
     {
-        auto vec = pnc::Vector<1,int>(0);
+        pnc::Vector<1,int> vec = {0};
         REQUIRE(pnc::Box<int>(vec, 1, 3)[0] == 1);
     }
 
     SECTION("behigh the box, should return high border")
     {
-        auto vec = pnc::Vector<1,int>(4);
+        pnc::Vector<1,int> vec = {4};
         REQUIRE(pnc::Box<int>(vec, 1, 3)[0] == 3);
     }
 }

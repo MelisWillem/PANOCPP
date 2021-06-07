@@ -1,33 +1,21 @@
 ﻿#pragma once
 
 #include <initializer_list>
+#include <array>
 
 namespace pnc {
 	template <unsigned int TSize, typename TData = double>
 	class Vector final {
 	private:
-		TData* data;
-		bool is_moved = false;
+		std::array<TData, TSize> data;
 
 	public:
 		static constexpr unsigned int size = TSize;
 		using data_type = TData;
 
-		Vector()
-			: data(new TData[size]{})
-		{
-		}
-
-		template <
-			typename... TArgs,
-			typename = typename std::enable_if_t<size == sizeof...(TArgs)>>
-			Vector(TArgs... args)
-			: data(new TData[TSize]{ args... })
-		{
-		}
+		Vector() : data(){}
 
 		Vector(std::initializer_list<TData> input)
-			: data(new TData[size]{})
 		{
 			size_t i = 0;
 			for (const auto val : input)
@@ -37,13 +25,7 @@ namespace pnc {
 			}
 		}
 
-		Vector(TData init[size])
-			: data(init)
-		{
-		}
-
-		Vector(const Vector<size, data_type>& other) :
-			data(new data_type[size]{})
+		Vector(const Vector<size, data_type>& other)
 		{
 			for (int i = 0; i < size; ++i)
 			{
@@ -51,28 +33,19 @@ namespace pnc {
 			}
 		}
 
-		~Vector()
-		{
-			delete[] data;
-		}
-
 		constexpr TData operator[](unsigned int index) const
 		{
-			assert(!IsMoved());
 			return data[index];
 		}
 
 		constexpr TData& operator[](unsigned int index)
 		{
-			assert(!IsMoved());
 			return data[index];
 		}
 
 		Vector(Vector&& other)
-			: data(other.data)
+			: data(std::move(other.data))
 		{
-			other.data = {};
-			other.is_moved = true;
 		}
 
 		template <
@@ -83,17 +56,11 @@ namespace pnc {
 			static_assert(
 				size == TVec::size,
 				"Trying to assign vector expression to a vector of a different dimension");
-			assert(!IsMoved());
 			for (unsigned int i = 0; i < size; i++) {
 				data[i] = other[i];
 			}
 
 			return *this;
-		}
-
-		bool IsMoved() const
-		{
-			return is_moved;
 		}
 	};
 

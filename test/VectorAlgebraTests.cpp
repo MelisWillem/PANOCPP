@@ -6,8 +6,8 @@ using namespace pnc;
 
 TEST_CASE("vector algebra test")
 {
-    auto vector1 = pnc::Vector<2, double>(new double[2] { 1, 2 });
-    auto vector2 = pnc::Vector<2, double>(new double[2] { 3, 4 });
+    pnc::Vector<2, double> vector1 =  { 1, 2 };
+    pnc::Vector<2, double> vector2 =  { 3, 4 };
     SECTION("vector sum")
     {
         auto vectorSum = vector1 + vector2;
@@ -69,8 +69,8 @@ TEST_CASE("vector algebra test")
 
     SECTION("Multi operation")
     {
-        auto x = pnc::Vector<2,int>(1,2);
-        auto y = pnc::Vector<2,int>(3,4);
+        auto x = pnc::Vector<2,int>{1,2};
+        auto y = pnc::Vector<2,int>{3,4};
         auto c = 2;
         auto res = (x * c)+ y;
 
@@ -80,8 +80,8 @@ TEST_CASE("vector algebra test")
 
     SECTION("Bug when combining stuff")
     {
-        auto x = pnc::Vector<2,int>(1,2);
-        auto y = pnc::Vector<2,int>(3,4);
+        auto x = pnc::Vector<2,int>{1,2};
+        auto y = pnc::Vector<2,int>{3,4};
         auto res = SUM(y+(-x)); // (3-1) + (4-2) = 2 + 2 = 4
 
         REQUIRE(res == 4);
@@ -90,8 +90,8 @@ TEST_CASE("vector algebra test")
 
 TEST_CASE("Helper methods")
 {
-    auto vec = pnc::Vector<2, double>( 1.0, 2.0 );
-    auto vecWithsign = pnc::Vector<2, double>( -1.0, 2.0 );
+    auto vec = pnc::Vector<2, double>{ 1.0, 2.0 };
+    auto vecWithsign = pnc::Vector<2, double>{ -1.0, 2.0 };
 
     SECTION("SUM")
     {

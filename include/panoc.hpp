@@ -42,46 +42,43 @@ namespace pnc {
 
 			double cost = cost_function_(vector, gradient);
 
-			auto c1 = LocationBuilder<TVec>().Build(
+			auto current = LocationBuilder<TVec>().Build(
 				cost_function_,
 				std::move(vector),
 				std::move(gradient),
 				cost,
 				cache
 			);
-			Location<TVec> c2;
-			ProximalGradientStep<TVec> current_prox_step = { c1, c2 };
 
 			auto prox_config = decltype(prox_calc_)::default_config;
-			auto prox_step = prox_calc_.Calculate(std::move(current_prox_step), prox_config);
+			Location<TVec> proximal;
+			prox_calc_.Calculate(current, proximal, prox_config);
 
 			for (int i = 0; i < config_.max_iterations && residual>config_.min_residual; ++i)
 			{
-				Location<TVec> old_l = prox_step.current;
-				Location<TVec> old_r = prox_step.proximal;
-				ProximalGradientStep<TVec> old_prox = { old_l, old_r };
-
-				auto oldGamma = prox_step.proximal.gamma;
+				auto oldGamma = proximal.gamma;
 				if (accelerator_.hasCache()) // If there is accelstep(which needs previous runs) then we can improve stuff
 				{
 					TVec accelerator_step;
-					accelerator_.solve(prox_step.current.gradient, accelerator_step);
-					auto [residual_, fbe_, prox_step_] = Search(std::move(prox_step), fbe, accelerator_step);
+					accelerator_.solve(current.gradient, accelerator_step);
+					std::tie(residual, fbe) = Search(current, proximal, fbe, accelerator_step);
 				}
 				else
 				{
-					// prox_step = prox_calc_.Calculate(std::move(prox_step), decltype(prox_calc_)::default_config);
-					// fbe = fbe_.Eval(current);
+					std::swap(current, proximal);
+					prox_calc_.Calculate(current, proximal, decltype(prox_calc_)::default_config);
+					fbe = fbe_.Eval(current, proximal);
+					// todo:: do we need to set the res here???
 				}
 
 				// This update doesn't always mean that the cache will be updated,
-				// the lbfgs does a carefull update and will refuse some updates due to beein badly conditioned
-				if (oldGamma != prox_step.proximal.gamma) { accelerator_.Reset(); }
+				// the lbfgs does a carefull update and will refuse some updates due to beeing badly conditioned
+				if (oldGamma != proximal.gamma) { accelerator_.Reset(); }
 				bool cache_updated = accelerator_.updateHessian(
-					old_prox.current.location,
-					old_prox.current.gradient,
-					prox_step.proximal.location,
-					prox_step.proximal.gradient);
+					current.location,
+					current.gradient,
+					proximal.location,
+					proximal.gradient);
 			}
 		}
 
@@ -91,10 +88,11 @@ namespace pnc {
 			return 0;
 		}
 
-		// return {residual, fbe, step}
+		// return {residual, fbe}
 		template<typename TVec>
-		std::tuple<double, double, ProximalGradientStep<TVec>> Search(
-			ProximalGradientStep<TVec>&& prox_step,
+		std::tuple<double, double> Search(
+			Location<TVec>& current,
+			Location<TVec>& proximal,
 			double fbe,
 			TVec& acceleration_step)
 		{
@@ -103,35 +101,39 @@ namespace pnc {
 			// as pure proximal gradient step.
 			for (int i = 0; i < config_.max_fbe_iterations; ++i)
 			{
-				Location<TVec> c1;
-				Location<TVec> c2;
-				ProximalGradientStep<TVec> cache{ std::move(c1),std::move(c2) };
+				Location<TVec> potential_new_location;
+				Location<TVec> potential_new_prox_location;
+
 				// Take a step away from the current location, using part proximal
 				// and part the accerator.
-				cache.current.location = prox_step.current.location
-					+ (prox_step.proximal.location - prox_step.current.location) * (1 - tau(i))
+				potential_new_location.location = current.location
+					+ (proximal.location - current.location) * (1 - tau(i))
 					+ acceleration_step * tau(i);
-				cache.current.cost = cost_function_(cache.current.location, cache.current.gradient);
-				cache.current.gamma = prox_step.current.gamma;
+				potential_new_location.cost = cost_function_(potential_new_location.location, potential_new_location.gradient);
+				potential_new_location.gamma = current.gamma;
 
 				// Calculate the fbe use a proximal step, keep the proximal step in the cache
 				// as we can reuse it if this step is accepted.
-				// cache = prox_calc_.Calculate(std::move(cache), prox_calc_config_);
-				auto new_fbe = fbe_.Eval(cache);
+				prox_calc_.Calculate(potential_new_location, potential_new_prox_location, prox_calc_config_);
+				auto new_fbe = fbe_.Eval(potential_new_location, potential_new_prox_location);
 
 				if (new_fbe < fbe)
 				{
-					const auto res = ResidualInfNorm(cache.proximal.location);
-					//std::swap(cache, prox_step);
-					return { res,new_fbe,std::move(prox_step) };
+					// Accept potential new location/prox_location
+					const auto res = ResidualInfNorm(potential_new_prox_location);
+					std::swap(potential_new_location, current); 
+					std::swap(potential_new_prox_location, proximal); 
+					return { res,new_fbe };
 				}
 			}
 
 			// use only proximal gradient, no accelerator
-			//auto prox_config = decltype(prox_calc_)::default_config;
-			//auto pure_prox = prox_calc_.Calculate(std::move(prox_step), prox_config);
-			//const double res = ResidualInfNorm(pure_prox);
-			// return { res,fbe_.Eval(pure_prox), std::move(prox_step) };
+			auto prox_config = decltype(prox_calc_)::default_config;
+			std::swap(current, proximal); // Take a pure prox step.
+			prox_calc_.Calculate(current,proximal, prox_config);
+			const double res = ResidualInfNorm(proximal);
+			const double new_fbe = fbe_.Eval(current, proximal);
+			return { res, new_fbe };
 		}
 	};
 }
