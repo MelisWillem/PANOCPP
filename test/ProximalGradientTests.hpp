@@ -36,15 +36,14 @@ TEST_CASE("Polygon test")
         auto calc = pnc::ProximalCalculator<CostFunction,prox>(cost_function,prox_op );
         for(int i=0;i<number_of_iterations;i++)
         {
-            auto step = calc.Calculate(
-                pnc::ProximalGradientStep(
+            calc.Calculate(
                     initial_location,
-                    solution),
+                    solution,
                 decltype(calc)::default_config);
-            initial_location.location = step.proximal.location;
-            initial_location.gradient = step.proximal.gradient;
-            initial_location.gamma = step.proximal.gamma;
-            initial_location.cost = step.proximal.cost;
+            initial_location.location = solution.location;
+            initial_location.gradient = solution.gradient;
+            initial_location.gamma = solution.gamma;
+            initial_location.cost = solution.cost;
         }
 
         double expected = 0.118816;

@@ -59,15 +59,14 @@ TEST_CASE("Simple FBE example")
         0,
         0);
 
-    auto prox_step = prox_cal.Calculate(
-            pnc::ProximalGradientStep(
+    prox_cal.Calculate<vec_fbe>(
                     start_location,
-                    solution),
+                    solution,
             decltype(prox_cal)::default_config);
 
     pnc::FBE fbe = {cost_function, prox_operator};
      auto res = fbe
-         .Eval(prox_step);
+         .Eval(start_location, solution);
 
      REQUIRE(res == Approx(20.408).epsilon(0.1));
 }

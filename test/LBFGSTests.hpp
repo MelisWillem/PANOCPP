@@ -20,7 +20,7 @@ TEST_CASE("LBFGSTestRosen")
         static constexpr unsigned int bufferSize = 20;
         auto solver = pnc::LBFGS<bufferSize,double,dimension> ();
 
-        auto position = Vector(-1.2,1.0);// start at location (-1.2;1.)
+        auto position = Vector{-1.2,1.0};// start at location (-1.2;1.)
         auto newPosition = Vector();
 
         auto gradientPosition = Vector();
