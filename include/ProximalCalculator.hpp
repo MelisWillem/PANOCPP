@@ -49,7 +49,7 @@ namespace pnc {
 			static constexpr Config default_config =
 			{
 				0.05, // safety_value_line_search
-				10 // min_gamma_value
+				1e-15 // min_gamma_value
 			};
 
 			TCostFunction& cost_function_;

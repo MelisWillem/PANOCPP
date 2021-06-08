@@ -1,4 +1,4 @@
-﻿#include"vectorAlgebra.hpp"
+﻿#include"VectorAlgebra.hpp"
 #include"ProximalCalculator.hpp"
 #include"LBFGS.hpp"
 #include<math.h>
@@ -17,12 +17,13 @@ namespace pnc {
 		TProx& prox_;
 		PanocConfig config_;
 		pnc::ProximalCalculator<TCostFunc, TProx> prox_calc_;
-		typename pnc::ProximalCalculator<TCostFunc, TProx>::Config prox_calc_config_ = pnc::ProximalCalculator<TCostFunc, TProx>::default_config;
+		typename pnc::ProximalCalculator<TCostFunc, TProx>::Config prox_calc_config_ 
+			= pnc::ProximalCalculator<TCostFunc, TProx>::default_config;
 		pnc::FBE<TCostFunc, TProx> fbe_;
 		LBFGS<10, double, 2> accelerator_;
 
 	public:
-		Panoc(TCostFunc cost_function, TProx& prox, PanocConfig& config)
+		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig& config)
 			: cost_function_(cost_function),
 			prox_(prox),
 			config_(config),
@@ -32,16 +33,17 @@ namespace pnc {
 		{}
 
 		template<typename TVec>
-		void Solve(TVec& vector)
+		void Solve(TVec& input)
 		{
+			TVec vector = input;
 			TVec gradient; // will be moved.
-			TVec cache; // will be moved.
-			double fbe;
+			double fbe = 0;
 			double residual = std::numeric_limits<double>::max();
 
 			double cost = cost_function_(vector, gradient);
 
-			auto current = LocationBuilder<TVec>().Build(
+			TVec cache; // Used only once when estimating gamma the first time.
+			Location<TVec> current = LocationBuilder<TVec>().Build(
 				cost_function_,
 				std::move(vector),
 				std::move(gradient),
@@ -50,6 +52,7 @@ namespace pnc {
 			);
 
 			auto prox_config = decltype(prox_calc_)::default_config;
+			Location<TVec> current_old = current;
 			Location<TVec> proximal;
 			prox_calc_.Calculate(current, proximal, prox_config);
 
@@ -60,6 +63,7 @@ namespace pnc {
 				{
 					TVec accelerator_step;
 					accelerator_.solve(current.gradient, accelerator_step);
+					current_old = current;
 					std::tie(residual, fbe) = Search(current, proximal, fbe, accelerator_step);
 				}
 				else
@@ -74,11 +78,13 @@ namespace pnc {
 				// the lbfgs does a carefull update and will refuse some updates due to beeing badly conditioned
 				if (oldGamma != proximal.gamma) { accelerator_.Reset(); }
 				bool cache_updated = accelerator_.updateHessian(
+					current_old.location,
+					current_old.gradient,
 					current.location,
-					current.gradient,
-					proximal.location,
-					proximal.gradient);
+					current.gradient);
 			}
+
+			input = current.location;
 		}
 
 		template<typename TVec>
@@ -87,8 +93,6 @@ namespace pnc {
 			return InfNorm((current.location - proximal.location) * (1/proximal.gamma));
 		}
 
-
-		// return {residual, fbe}
 		template<typename TVec>
 		std::tuple<double, double> Search(
 			Location<TVec>& current,
@@ -109,7 +113,17 @@ namespace pnc {
 					+ (proximal.location - current.location) * (1 - tau(i))
 					+ acceleration_step * tau(i);
 				potential_new_location.cost = cost_function_(potential_new_location.location, potential_new_location.gradient);
-				potential_new_location.gamma = current.gamma;
+				double safety_value_linesearch = 0.05;
+				TVec cache;
+				auto lip_config = LipschitzEstimator::default_config;
+				potential_new_location.gamma = (1-safety_value_linesearch)/LipschitzEstimator::estimate<
+					TVec,
+					decltype(lip_config),
+					decltype(cost_function_)>(
+						potential_new_location,
+						lip_config,
+						cost_function_,
+						cache);
 
 				// Calculate the fbe use a proximal step, keep the proximal step in the cache
 				// as we can reuse it if this step is accepted.

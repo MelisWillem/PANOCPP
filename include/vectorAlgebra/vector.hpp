@@ -48,10 +48,19 @@ namespace pnc {
 		{
 		}
 
+		Vector<size, TData>& operator=(const Vector<size, TData>& other)
+		{
+			for (unsigned int i = 0; i < size; i++) {
+				data[i] = other[i];
+			}
+
+			return *this;
+		}
+
 		template <
 			typename TVecRef,
 			typename TVec = std::remove_reference_t<TVecRef>>
-			constexpr Vector<size, TData>& operator=(TVecRef&& other)
+		Vector<size, TData>& operator=(TVecRef&& other)
 		{
 			static_assert(
 				size == TVec::size,
@@ -63,5 +72,4 @@ namespace pnc {
 			return *this;
 		}
 	};
-
 }
