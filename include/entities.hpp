@@ -39,6 +39,17 @@ namespace pnc {
 		{
 		}
 
+		template<typename TVec>
+		Location<TVec>& operator=(const Location<TVec>& other)
+		{
+			location = other.location;
+			gradient = other.gradient;
+			gamma = other.gamma;
+			 cost = other.cost;
+
+			return this;
+		}
+
 		TVectorRef location;
 		TVectorRef gradient;
 		TConstant gamma;
