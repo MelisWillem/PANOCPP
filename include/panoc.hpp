@@ -1,6 +1,6 @@
-﻿#include"VectorAlgebra.hpp"
-#include"ProximalCalculator.hpp"
-#include"LBFGS.hpp"
+﻿#include<VectorAlgebra.hpp>
+#include<ProximalCalculator.hpp>
+#include<LBFGS.hpp>
 #include<math.h>
 
 namespace pnc {

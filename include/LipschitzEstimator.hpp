@@ -1,9 +1,9 @@
 #pragma once
 
-#include "VectorAlgebra.hpp"
+#include <VectorAlgebra.hpp>
 #include <iostream>
-#include "entities.hpp"
-#include "math.h"
+#include <entities.hpp>
+#include <math.h>
 
 namespace pnc {
 
