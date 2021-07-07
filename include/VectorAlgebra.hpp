@@ -7,21 +7,21 @@
 #include <utility>
 #include <cstdlib>
 
-#include"vectorAlgebra/vector.hpp"
-#include"vectorAlgebra/vectorUnit.hpp"
+#include<vectorAlgebra/vector.hpp>
+#include<vectorAlgebra/vectorUnit.hpp>
 
-// Extra helper stuff to keep things clean
-#include"vectorAlgebra/templateHelpers.hpp"
-#include"vectorAlgebra/MAX.hpp"
-#include"vectorAlgebra/SUM.hpp"
+// Extra<helper stuff to keep things clean
+#include<vectorAlgebra/templateHelpers.hpp>
+#include<vectorAlgebra/MAX.hpp>
+#include<vectorAlgebra/SUM.hpp>
 
-#include"vectorAlgebra/elementOperations.hpp"
-#include"vectorAlgebra/vectorPairwiseMap.hpp"
-#include"vectorAlgebra/vectorMap.hpp"
+#include<vectorAlgebra/elementOperations.hpp>
+#include<vectorAlgebra/vectorPairwiseMap.hpp>
+#include<vectorAlgebra/vectorMap.hpp>
 
-#include"vectorAlgebra/operators.hpp"
-#include"vectorAlgebra/operations.hpp"
+#include<vectorAlgebra/operators.hpp>
+#include<vectorAlgebra/operations.hpp>
 
-#include"vectorAlgebra/infNorm.hpp"
+#include<vectorAlgebra/infNorm.hpp>
 
-#include"vectorAlgebra/traits.hpp"
+#include<vectorAlgebra/traits.hpp>

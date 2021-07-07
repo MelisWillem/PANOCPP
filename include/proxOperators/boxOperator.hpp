@@ -1,4 +1,4 @@
-#include "VectorAlgebra.hpp"
+#include <VectorAlgebra.hpp>
 #include <type_traits>
 
 namespace pnc {

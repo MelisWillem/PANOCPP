@@ -1,4 +1,4 @@
-#include"VectorAlgebra.hpp"
+#include<VectorAlgebra.hpp>
 #include<type_traits>
 #include<algorithm>
 
@@ -58,7 +58,7 @@ namespace pnc
                         return _input[index];
                     case State::mid:
                         return sign(_input[index])*offset;
-                    case State::high:
+                    default: // case State::high:
                         return sign(_input[index])*(abs(_input[index])-offset);
                 }
             }

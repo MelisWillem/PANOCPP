@@ -1,5 +1,5 @@
-#include "VectorAlgebra.hpp"
-#include "cmath"
+#include <VectorAlgebra.hpp>
+#include <cmath>
 
 namespace pnc {
 namespace test {
