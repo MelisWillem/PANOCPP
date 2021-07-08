@@ -2,8 +2,6 @@
 #include<string>
 #include<functional>
 
-using CostFunction = pnc::test::Poly<5, 2>;
-
 template<
     typename T,
     auto dimension,
