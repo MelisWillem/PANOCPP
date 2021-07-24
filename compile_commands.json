@@ -1,0 +1,19 @@
+[
+{
+  "directory": "/home/zilleplus/code/cpp/PANOCPP/build",
+  "command": "/usr/bin/c++   -I../lib/catch2 -I../include    -std=gnu++17 -o CMakeFiles/proxOperatorTests.dir/test/proxOperatorTest.cpp.o -c /home/zilleplus/code/cpp/PANOCPP/test/proxOperatorTest.cpp",
+  "file": "/home/zilleplus/code/cpp/PANOCPP/test/proxOperatorTest.cpp"
+},
+
+{
+  "directory": "/home/zilleplus/code/cpp/PANOCPP/build",
+  "command": "/usr/bin/c++   -I../lib/catch2 -I../include    -std=gnu++17 -o CMakeFiles/vectorAlgebraTests.dir/test/VectorAlgebraTests.cpp.o -c /home/zilleplus/code/cpp/PANOCPP/test/VectorAlgebraTests.cpp",
+  "file": "/home/zilleplus/code/cpp/PANOCPP/test/VectorAlgebraTests.cpp"
+},
+
+{
+  "directory": "/home/zilleplus/code/cpp/PANOCPP/build",
+  "command": "/usr/bin/c++   -I../lib/catch2 -I../include    -std=gnu++17 -o CMakeFiles/panocTests.dir/test/PanocTests.cpp.o -c /home/zilleplus/code/cpp/PANOCPP/test/PanocTests.cpp",
+  "file": "/home/zilleplus/code/cpp/PANOCPP/test/PanocTests.cpp"
+}
+]
