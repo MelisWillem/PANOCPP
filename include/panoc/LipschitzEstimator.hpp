@@ -1,8 +1,8 @@
 #pragma once
 
-#include <VectorAlgebra.hpp>
+#include <panoc/VectorAlgebra.hpp>
+#include <panoc/entities.hpp>
 #include <iostream>
-#include <entities.hpp>
 #include <math.h>
 
 namespace pnc {

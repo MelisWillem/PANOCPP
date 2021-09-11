@@ -1,5 +1,5 @@
 ﻿#include <math.h>
-#include<LBFGS.hpp>
+#include <panoc/LBFGS.hpp>
 
 void RosenBrockGradient(pnc::Vector<2,double>& location, pnc::Vector<2,double>& gradient)
 {

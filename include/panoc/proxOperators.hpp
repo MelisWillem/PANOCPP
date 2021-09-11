@@ -3,5 +3,5 @@
 // This should use the concept of a vector and
 // not the vector itself.
 
-#include <proxOperators/boxOperator.hpp>
-#include <proxOperators/normBox.hpp>
+#include <panoc/proxOperators/boxOperator.hpp>
+#include <panoc/proxOperators/normBox.hpp>

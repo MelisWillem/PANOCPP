@@ -2,7 +2,7 @@
 
 #include<math.h>
 #include<vector>
-#include<VectorAlgebra.hpp>
+#include<panoc/VectorAlgebra.hpp>
 
 namespace pnc{
 

@@ -1,4 +1,4 @@
-#include <fbe.hpp>
+#include <panoc/fbe.hpp>
 // var prox = new ProxBox(size: 7, penalty: 1, dimension: 2);
 //
 // Manual calculation of this fbe:

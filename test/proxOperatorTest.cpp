@@ -1,4 +1,4 @@
-#include"proxOperators.hpp"
+#include <panoc/proxOperators.hpp>
 #define CATCH_CONFIG_MAIN
 #include"catch.hpp"
 
