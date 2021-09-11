@@ -1,4 +1,4 @@
-#include "panoc.hpp"
+#include <panoc/panoc.hpp>
 
 TEST_CASE("Given_poly_of_6th_degree_solve")
 {

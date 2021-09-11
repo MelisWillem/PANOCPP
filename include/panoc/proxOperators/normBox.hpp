@@ -1,4 +1,4 @@
-#include<VectorAlgebra.hpp>
+#include<panoc/VectorAlgebra.hpp>
 #include<type_traits>
 #include<algorithm>
 

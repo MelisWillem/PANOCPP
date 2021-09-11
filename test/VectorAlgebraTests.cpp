@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_MAIN
-#include <VectorAlgebra.hpp>
+#include <panoc/VectorAlgebra.hpp>
 #include <catch.hpp>
 
 using namespace pnc;

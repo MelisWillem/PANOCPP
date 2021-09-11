@@ -1,7 +1,7 @@
-﻿#include<VectorAlgebra.hpp>
-#include<ProximalCalculator.hpp>
-#include<LBFGS.hpp>
-#include<fbe.hpp>
+﻿#include<panoc/VectorAlgebra.hpp>
+#include<panoc/ProximalCalculator.hpp>
+#include<panoc/LBFGS.hpp>
+#include<panoc/fbe.hpp>
 #include<math.h>
 
 namespace pnc {

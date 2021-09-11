@@ -1,6 +1,6 @@
 #include<type_traits>
 #include<utility>
-#include<LipschitzEstimator.hpp>
+#include<panoc/LipschitzEstimator.hpp>
 
 namespace pnc{
 

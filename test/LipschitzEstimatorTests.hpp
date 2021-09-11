@@ -1,6 +1,6 @@
-#include "LipschitzEstimator.hpp"
+#include <panoc/LipschitzEstimator.hpp>
 #include "Poly.hpp"
-#include "entities.hpp"
+#include <panoc/entities.hpp>
 
 TEST_CASE("LipschitzEstimatorTest")
 {

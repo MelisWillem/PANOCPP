@@ -1,6 +1,6 @@
-#include"ProximalCalculator.hpp" 
-#include"proxOperators.hpp"
-#include"LocationBuilder.hpp"
+#include<panoc/ProximalCalculator.hpp>
+#include<panoc/proxOperators.hpp>
+#include<panoc/LocationBuilder.hpp>
 
 using CostFunction = pnc::test::Poly<5, 2>;
 

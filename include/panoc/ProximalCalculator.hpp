@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include <vector>
-#include <entities.hpp>
-#include <LipschitzEstimator.hpp>
-#include <vectorAlgebra/tostring.hpp>
-#include <VectorAlgebra.hpp>
+#include <panoc/vectorAlgebra/vector.hpp>
+#include <panoc/entities.hpp>
+#include <panoc/LipschitzEstimator.hpp>
+#include <panoc/vectorAlgebra/tostring.hpp>
+#include <panoc/VectorAlgebra.hpp>
 #include <iostream>
 
 namespace pnc {
