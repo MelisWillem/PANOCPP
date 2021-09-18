@@ -6,7 +6,7 @@ TEST_CASE("LipschitzEstimatorTest")
 {
     SECTION("SIMPLE_POLYGON_TEST")
     {
-        using Vec = pnc::Vector<2, double>;
+        using Vec = pnc::Vector<double>;
         pnc::test::Poly<2, 2> cost_function;
         auto position = Vec{6.0,10.0}; 
         auto gradient_start_position = Vec{};
@@ -19,7 +19,7 @@ TEST_CASE("LipschitzEstimatorTest")
 
         auto testConfig = pnc::LipschitzEstimator::default_config;
 
-        auto cache = Vec();
+        auto cache = Vec(2); // size=2
         double result = pnc::LipschitzEstimator::estimate(
                 location,
                 testConfig,

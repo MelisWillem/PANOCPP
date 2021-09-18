@@ -7,30 +7,43 @@
 namespace pnc{
 
 
-template<int buffer_size,typename data_type, int dimension>
+template<int buffer_size,typename data_type, typename size_type>
 class LBFGS
 {
 private:
-    using Vec = Vector<dimension,data_type>;
+    using Vec = Vector<data_type>;
     data_type hessian_estimate = 0;
     unsigned int _cursor = 0;
     unsigned int _activeBufferSize=0;
 
-    Vec _s[buffer_size + 1]; // saves all the stuff column wise, fortran style
-    Vec _y[buffer_size + 1]; // one element extra used in update
+    // TODO::implement matrix type
+    std::vector<Vec> _s;
+    std::vector<Vec> _y;
     data_type _alpha[buffer_size];
     data_type _rho[buffer_size];
+    size_type _dimension;
 
 	static int getFloatingIndex(int i,int cursor,int bufferSize) {
 		return (cursor - 1 - i + bufferSize) % bufferSize;
 	}
 
 public:
-    LBFGS()
+    LBFGS(size_type dimension) :
+        _dimension(dimension)
     {
         _activeBufferSize = 0;
+        // saves all the stuff column wise, fortran style
+		// one element extra used in update
+        // very inefficient -> should be done by using some
+        // kind of matrix type.
+		_s.reserve(buffer_size + 1);
+		_y.reserve(buffer_size + 1);
+        for(int i = 0; i < buffer_size+1; ++i)
+        {
+            _s.emplace_back(dimension);
+            _y.emplace_back(dimension);
+        }
     }
-
     bool hasCache()
     {
         return _activeBufferSize != 0;

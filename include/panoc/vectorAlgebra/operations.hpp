@@ -4,12 +4,7 @@ namespace pnc{
 
     template <
         typename TLeftRef,
-        typename TRightRef,
-        typename TLeft = std::remove_reference_t<TLeftRef>,
-        typename TRight = std::remove_reference_t<TRightRef>,
-        unsigned int left_size = TLeft::size,
-        unsigned int right_size = TRight::size,
-        typename = typename std::enable_if_t<left_size==right_size>
+        typename TRightRef
         >
     constexpr auto ComponentWiseMax(
         TLeftRef&& left,
@@ -42,7 +37,6 @@ namespace pnc{
     template<
         typename TVectorRef,
         typename TVector = std::remove_reference_t<TVectorRef>,
-        unsigned int size = TVector::size,
         typename data_type = typename TVector::data_type
         >
     constexpr auto NormL1(TVectorRef&& vec) 

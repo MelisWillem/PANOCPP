@@ -6,27 +6,27 @@ TEST_CASE("Box test")
 {
     SECTION("inside the box, should stay inside the box")
     {
-        pnc::Vector<1,int> vec = {2};
-        REQUIRE(pnc::Box<int>(vec, 1, 3)[0] == 2);
+        pnc::Vector<int> vec = {2};
+        REQUIRE(pnc::Box(vec, 1, 3)[0] == 2);
     }
 
     SECTION("below the box, should return low border")
     {
-        pnc::Vector<1,int> vec = {0};
-        REQUIRE(pnc::Box<int>(vec, 1, 3)[0] == 1);
+        pnc::Vector<int> vec = {0};
+        REQUIRE(pnc::Box(vec, 1, 3)[0] == 1);
     }
 
     SECTION("behigh the box, should return high border")
     {
-        pnc::Vector<1,int> vec = {4};
-        REQUIRE(pnc::Box<int>(vec, 1, 3)[0] == 3);
+        pnc::Vector<int> vec = {4};
+        REQUIRE(pnc::Box(vec, 1, 3)[0] == 3);
     }
 }
 
 TEST_CASE("Norm box test")
 {
     using namespace pnc;
-    using Vec = Vector<2,int>;
+    using Vec = Vector<int>;
     // Test all 3 cases of the normbox
     Vec v{1,2};
     // cost = max{0,l1norm-offset}

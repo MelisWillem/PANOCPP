@@ -22,5 +22,3 @@
 #include<panoc/vectorAlgebra/operations.hpp>
 
 #include<panoc/vectorAlgebra/infNorm.hpp>
-
-#include<panoc/vectorAlgebra/traits.hpp>

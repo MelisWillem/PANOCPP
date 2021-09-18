@@ -2,7 +2,7 @@
 #include<panoc/proxOperators.hpp>
 #include<panoc/LocationBuilder.hpp>
 
-using CostFunction = pnc::test::Poly<5, 2>;
+using CostFunction = pnc::test::Poly<5>;
 
 TEST_CASE("Polygon test")
 {
@@ -11,17 +11,17 @@ TEST_CASE("Polygon test")
         const int number_of_iterations = 100;
         const int dimension = 2;
 
-        using Vec = pnc::Vector<dimension,double>;
+        using Vec = pnc::Vector<double>;
         using prox = pnc::NormBox<double>;
 
-        auto initialPosition = Vec{0.5,0.5};
-        auto initialGradient = Vec{};
+        Vec initialPosition = {0.5,0.5};
+        auto initialGradient = Vec(2);
         CostFunction cost_function;
         auto initialCost = cost_function(initialPosition,initialGradient);
         
         auto solution = pnc::Location<Vec>(
-            Vec(),
-            Vec(),
+            Vec(initialPosition.size()),
+            Vec(initialPosition.size()),
             0,
             0);
         auto initial_location = pnc::LocationBuilder<Vec>::Build(
@@ -31,7 +31,7 @@ TEST_CASE("Polygon test")
             initialCost,
             solution.location);
 
-        auto offset = double{2};
+        double offset = { 2 };
         prox prox_op = { offset };
         auto calc = pnc::ProximalCalculator<CostFunction,prox>(cost_function,prox_op );
         for(int i=0;i<number_of_iterations;i++)

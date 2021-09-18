@@ -33,7 +33,8 @@ public:
         typename TVector,
         typename TConfig,
         typename TCostFunction,
-        typename data_type = typename TVector::data_type
+        typename data_type = typename TVector::data_type,
+        typename size_type = typename TVector::size_type
             >
     static data_type estimate(
         const Location<TVector>& location,
@@ -44,7 +45,7 @@ public:
         // Find delta= max{small number,10^{-6}*u_0}
         auto delta = ComponentWiseMax(
                 (config.lipschitz_safetyValue*location.location),
-                pnc::VectorUnit<2,double>(config.minimum_delta));
+                pnc::VectorUnit<size_type, data_type>(config.minimum_delta, location.location.size()));
 
         auto deviated_position = location.location + delta;
         auto& deviated_gradient = cache;
