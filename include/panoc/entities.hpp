@@ -7,7 +7,8 @@ namespace pnc {
 	template <
 		typename TVectorRef,
 		typename TVector = std::remove_reference_t<TVectorRef>,
-		typename TConstant = typename TVector::data_type
+		typename TConstant = typename TVector::data_type,
+		typename TSize = typename TVector::size_type
 	>
 		struct Location {
 		Location(
@@ -21,9 +22,9 @@ namespace pnc {
 			cost(cost)
 		{ }
 
-		Location() :
-			location(),
-			gradient(),
+		Location(TSize dimension) :
+			location(dimension),
+			gradient(dimension),
 			gamma(0),
 			cost(0)
 		{

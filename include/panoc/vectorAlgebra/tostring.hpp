@@ -2,15 +2,20 @@
 #include<string>
 #include<functional>
 
-template<
-    typename T,
-    auto dimension,
-    typename = typename std::enable_if_t<std::less<int>()(1, dimension)>>
-std::string ToString(const pnc::Vector<dimension, T>& vec)
+template<typename T>
+std::string ToString(const pnc::Vector<T>& vec)
 {
+    if (vec.size() == 0)
+    {
+		return "[]";
+    }
+    if (vec.size() == 1) {
+		return "[" + std::to_string(vec[0]) + "]";
+    }
+
     std::stringstream ss;
     ss << "[";
-    for(std::size_t i=0; i < dimension-1; ++i)
+    for(typename T::size_type i=0; i < dimension-1; ++i)
     {
         ss << std::to_string(vec[i]) << ", ";
     }
@@ -19,16 +24,4 @@ std::string ToString(const pnc::Vector<dimension, T>& vec)
 
 
     return ss.str();
-}
-
-template<typename T>
-std::string ToString(const pnc::Vector<1, T>& vec)
-{
-    return "[" + std::to_string(vec[0]) + "]";
-}
-
-template<typename T>
-std::string ToString(const pnc::Vector<0, T>& vec)
-{
-    return "[]";
 }

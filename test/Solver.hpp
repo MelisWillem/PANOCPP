@@ -18,9 +18,9 @@ TEST_CASE("Given_poly_of_6th_degree_solve")
 		10, // max_fbe_iterations
 		1e-15 // min_residual
 	};
-	Panoc solver = { cost_function, prox_op, config };
+	Panoc solver = { cost_function, prox_op, config , dimension};
 
-	Vector<2> solution = { 0.5,0.5 }; 
+	Vector<double> solution = { 0.5,0.5 }; 
 	solver.Solve(solution);
 
 	REQUIRE(solution[0] == Approx(0.22128222).epsilon(1e-6));
@@ -45,9 +45,9 @@ TEST_CASE("Given_poly_of_6th_degree_solve_2th_test")
 		10, // max_fbe_iterations
 		1e-15 // min_residual
 	};
-	Panoc solver = { cost_function, prox_op, config };
+	Panoc solver = { cost_function, prox_op, config, dimension};
 
-	Vector<2> solution = { 1,1 }; 
+	Vector<double> solution = { 1,1 }; 
 	solver.Solve(solution);
 
 	REQUIRE(solution[0] == Approx(0.204269).epsilon(1e-5));

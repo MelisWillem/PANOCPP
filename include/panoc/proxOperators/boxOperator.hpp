@@ -9,15 +9,18 @@ namespace pnc {
 // the closest border is returned.
 // precondition: low < high
 template <
-    typename data_type_,
-    typename TVector>
+    typename TVectorRef,
+    typename TVector = typename std::remove_reference_t<TVectorRef>,
+    typename TSize = typename TVector::size_type,
+    typename TData = typename TVector::data_type
+>
 class BoxOperator final {
 public:
-    static constexpr unsigned int size = std::remove_reference_t<TVector>::size;
-    using data_type = data_type_;
+    using data_type = TData;
+    using size_type = TSize;
 
 private:
-    const TVector input;
+    const TVectorRef input;
     const data_type penalty = 1; // todo make this dyamic...
     const data_type low;
     const data_type high;
@@ -25,15 +28,15 @@ private:
 
 public:
     explicit BoxOperator(
-        TVector input,
+        TVectorRef&& input,
         const data_type low,
         const data_type high)
-        : input(std::forward<TVector>(input))
+        : input(std::forward<TVectorRef>(input))
         , low(low)
         , high(high)
     {
         _cost = 0;
-        for (std::size_t i = 0; i < input.size; ++i) {
+        for (size_type i = 0; i < input.size(); ++i) {
             if (input[i] > high || input[i] < low) {
                 _cost += penalty;
             }
@@ -55,30 +58,33 @@ public:
     {
         return _cost;
     }
+
+    auto size() const
+    {
+        return input.size();
+    }
 };
 
 // The box operator always returns a vector with
 // elements inside the box borders.
 // If the value is outside the borders, the value of
 // the closest border is returned.
-// precondition: data_type == TVector::data_type
-template <
-    typename data_type,
-    typename TVector,
-    typename = typename std::enable_if_t<
-        std::is_same_v<data_type, typename TVector::data_type>>>
-constexpr auto Box(const TVector& input, const data_type low, const data_type high)
+template<
+    typename TVectorRef,
+    typename TVector = std::remove_reference_t<TVectorRef>
+>
+constexpr auto Box(
+    TVectorRef&& input,
+    const typename TVector::data_type low,
+    const typename TVector::data_type high)
 {
-    // Sadly enough data_type needs to be defined by the user,
-    // there must be a way to get rid of this !
-    return BoxOperator<data_type, decltype(input)>(input, low, high);
+    return BoxOperator<decltype(input)>
+        (std::forward<TVectorRef>(input), low, high);
 }
 
 template <
-    typename data_type,
-    typename TVector,
-    typename = typename std::enable_if_t<
-        std::is_same_v<data_type, typename TVector::data_type>>>
+    typename data_type
+>
 struct BoxOp final {
     const data_type low;
     const data_type high;
@@ -90,13 +96,14 @@ struct BoxOp final {
     {
     }
 
-    template <
+    template<
         typename TVecRef,
-        typename TVec = std::remove_reference_t<TVecRef>,
-        typename = std::enable_if_t<std::is_same_v<typename TVec::data_type, data_type>>>
+        typename TVec = typename std::remove_reference_t<TVecRef>,
+        typename = typename std::enable_if_t<std::is_same<data_type, typename TVec::data_type>::value>
+    >
     auto operator()(TVecRef&& input) const
     {
-        return BoxOperator<data_type, TVecRef>
+        return BoxOperator<TVecRef>
             (std::forward<TVecRef>(input), low, high);
     }
 };

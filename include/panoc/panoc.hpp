@@ -21,29 +21,31 @@ namespace pnc {
 		typename pnc::ProximalCalculator<TCostFunc, TProx>::Config prox_calc_config_ 
 			= pnc::ProximalCalculator<TCostFunc, TProx>::default_config;
 		pnc::FBE<TCostFunc, TProx> fbe_;
-		LBFGS<10, double, 2> accelerator_;
+		// TODO: make double/int generic
+		LBFGS<10, double, int> accelerator_;
 
 	public:
-		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig& config)
+		// TODO:: make in generic
+		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig& config, int dimension)
 			: cost_function_(cost_function),
 			prox_(prox),
 			config_(config),
 			prox_calc_(cost_function_, prox_),
 			fbe_(cost_function, prox_),
-			accelerator_()
+			accelerator_(dimension)
 		{}
 
 		template<typename TVec>
 		void Solve(TVec& input)
 		{
 			TVec vector = input;
-			TVec gradient; // will be moved.
+			TVec gradient(input.size()); // will be moved.
 			double fbe = 0;
 			double residual = std::numeric_limits<double>::max();
 
 			double cost = cost_function_(vector, gradient);
 
-			TVec cache; // Used only once when estimating gamma the first time.
+			TVec cache(input.size()); // Used only once when estimating gamma the first time.
 			Location<TVec> current = LocationBuilder<TVec>().Build(
 				cost_function_,
 				std::move(vector),
@@ -54,7 +56,7 @@ namespace pnc {
 
 			auto prox_config = decltype(prox_calc_)::default_config;
 			Location<TVec> current_old = current;
-			Location<TVec> proximal;
+			Location<TVec> proximal(input.size());
 			prox_calc_.Calculate(current, proximal, prox_config);
 
 			for (int i = 0; i < config_.max_iterations && residual>config_.min_residual; ++i)
@@ -62,7 +64,7 @@ namespace pnc {
 				auto oldGamma = proximal.gamma;
 				if (accelerator_.hasCache()) // If there is accelstep(which needs previous runs) then we can improve stuff
 				{
-					TVec accelerator_step;
+					TVec accelerator_step(input.size());
 					accelerator_.solve(current.gradient, accelerator_step);
 					current_old = current;
 					std::tie(residual, fbe) = Search(current, proximal, fbe, accelerator_step);
@@ -106,8 +108,8 @@ namespace pnc {
 			// as pure proximal gradient step.
 			for (int i = 0; i < config_.max_fbe_iterations; ++i)
 			{
-				Location<TVec> potential_new_location;
-				Location<TVec> potential_new_prox_location;
+				Location<TVec> potential_new_location(current.location.size());
+				Location<TVec> potential_new_prox_location(current.location.size());
 				// Take a step away from the current location, using part proximal
 				// and part the accerator.
 				potential_new_location.location = current.location
@@ -115,7 +117,7 @@ namespace pnc {
 					+ acceleration_step * tau(i);
 				potential_new_location.cost = cost_function_(potential_new_location.location, potential_new_location.gradient);
 				double safety_value_linesearch = 0.05;
-				TVec cache;
+				TVec cache(current.location.size());
 				auto lip_config = LipschitzEstimator::default_config;
 				potential_new_location.gamma = (1-safety_value_linesearch)/LipschitzEstimator::estimate<
 					TVec,

@@ -1,7 +1,7 @@
 ﻿#include <math.h>
 #include <panoc/LBFGS.hpp>
 
-void RosenBrockGradient(pnc::Vector<2,double>& location, pnc::Vector<2,double>& gradient)
+void RosenBrockGradient(pnc::Vector<double>& location, pnc::Vector<double>& gradient)
 {
     double a = 1;
     double b = 100;
@@ -15,19 +15,22 @@ TEST_CASE("LBFGSTestRosen")
 {
     SECTION("GIVEN_ROSENBROCK_CHECK_SOLVER")
     {
-        using Vector = pnc::Vector<2,double>;
+        using Vector = pnc::Vector<double>;
         static constexpr unsigned int dimension = 2;
         static constexpr unsigned int bufferSize = 20;
-        auto solver = pnc::LBFGS<bufferSize,double,dimension> ();
+        auto solver = pnc::LBFGS<
+            bufferSize,
+            typename Vector::data_type,
+            typename Vector::size_type> (dimension);
 
         auto position = Vector{-1.2,1.0};// start at location (-1.2;1.)
-        auto newPosition = Vector();
+        auto newPosition = Vector(position.size());
 
-        auto gradientPosition = Vector();
+        auto gradientPosition = Vector(position.size());
         RosenBrockGradient(position, gradientPosition);
-        auto newGradient = Vector();
+        auto newGradient = Vector(position.size());
 
-        auto direction = Vector();
+        Vector direction (position.size());
 
         for (unsigned int i = 0; i < 4; i++)
         {

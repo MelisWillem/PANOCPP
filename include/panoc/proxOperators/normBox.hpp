@@ -7,9 +7,13 @@ namespace pnc
     template<
         typename TVecRef,
         typename TVec = typename std::remove_reference_t<TVecRef>,
-        typename data_type = typename TVec::data_type 
+        typename TData = typename TVec::data_type,
+        typename TSize = typename TVec::size_type
             >
     class NormBoxOperator{
+		public:
+            using data_type = TData;
+            using size_type = TSize;
         private: 
             enum State{
                 low,
@@ -49,7 +53,6 @@ namespace pnc
                 _cost = std::max(data_type{0},norml1-offset);
             }
 
-            static constexpr int size = TVec::size;
             constexpr auto operator[](const unsigned int index) const
             {
                 switch(_state)
@@ -66,6 +69,11 @@ namespace pnc
             constexpr auto cost() const
             {
                 return _cost;
+            }
+
+            constexpr auto size() const
+            {
+                return _input.size();
             }
     };
 

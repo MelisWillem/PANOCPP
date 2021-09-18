@@ -11,13 +11,17 @@ namespace pnc{
         TVecRef v;
 
     public:
-        static constexpr unsigned int size = TVec::size;
         using data_type = typename TVec::data_type;
+        using size_type = typename TVec::size_type;
 
         VectorMap(TVecRef&& v) 
             : v(std::forward<TVecRef>(v)) {}
 
-        constexpr auto operator[](unsigned int index) const
+        size_type size() const {
+            return v.size();
+        }
+
+        constexpr auto operator[](size_type index) const
         {
             return TFunc<data_type>().eval(v[index]);
         }

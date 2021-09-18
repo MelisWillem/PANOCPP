@@ -1,36 +1,35 @@
 ﻿#pragma once
 
 #include <initializer_list>
-#include <array>
+#include <vector>
 
 namespace pnc {
-	template <unsigned int TSize, typename TData = double>
+	template <typename TData = double>
 	class Vector final {
 	private:
-		std::array<TData, TSize> data;
+		std::vector<TData> data;
 
 	public:
-		static constexpr unsigned int size = TSize;
 		using data_type = TData;
+		using size_type = int;
 
-		Vector() : data(){}
+		Vector(unsigned int size) : data(size){}
 
-		Vector(std::initializer_list<TData> input)
+		Vector(std::initializer_list<TData> input) : data(input)
 		{
-			size_t i = 0;
-			for (const auto val : input)
-			{
-				data[i] = val;
-				++i;
-			}
 		}
 
-		Vector(const Vector<size, data_type>& other)
+		Vector(const Vector<data_type>& other)
 		{
-			for (int i = 0; i < size; ++i)
+			for (int i = 0; i < size(); ++i)
 			{
 				data[i] = other[i];
 			}
+		}
+
+		auto size() const
+		{
+			return (size_type)data.size();
 		}
 
 		constexpr TData operator[](unsigned int index) const
@@ -48,9 +47,9 @@ namespace pnc {
 		{
 		}
 
-		Vector<size, TData>& operator=(const Vector<size, TData>& other)
+		Vector<TData>& operator=(const Vector<TData>& other)
 		{
-			for (unsigned int i = 0; i < size; i++) {
+			for (unsigned int i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 
@@ -59,13 +58,14 @@ namespace pnc {
 
 		template <
 			typename TVecRef,
-			typename TVec = std::remove_reference_t<TVecRef>>
-		Vector<size, TData>& operator=(TVecRef&& other)
+			typename TVec = std::remove_reference_t<TVecRef>,
+			typename TData = typename TVec::data_type,
+			typename TSize = typename TVec::size_type
+		>
+		Vector<TData>& operator=(TVecRef&& other)
 		{
-			static_assert(
-				size == TVec::size,
-				"Trying to assign vector expression to a vector of a different dimension");
-			for (unsigned int i = 0; i < size; i++) {
+			assert(size() == other.size());
+			for (TSize i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 

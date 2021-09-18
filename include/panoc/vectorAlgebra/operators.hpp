@@ -19,8 +19,9 @@ namespace pnc{
         TLeftRef&& left,
         TRight right)
     {
-        using TRightVec = VectorUnit<TLeft::size,typename TLeft::data_type>;
-        return VectorSum<TLeftRef,TRightVec>(std::forward<TLeftRef>(left),TRightVec(right));
+        using TRightVec = VectorUnit<typename TLeft::size_type, typename TLeft::data_type>;
+        return VectorSum<TLeftRef, TRightVec>
+            (std::forward<TLeftRef>(left), TRightVec(right, left.size()));
     }
 
     // constant + vector
@@ -31,12 +32,12 @@ namespace pnc{
         typename = typename TRight::data_type,
         typename = typename std::enable_if_t<IsDataOfVectorKind<TRight, TLeft>::value>>
     constexpr auto operator+(
-        TLeft left,
+        TLeft left, // not a vector
         TRightRef&& right)
     {
-        using TLeftVector = VectorUnit<TRight::size,typename TRight::data_type>;
+        using TLeftVector = VectorUnit<TRight::size_type,typename TRight::data_type>;
         return VectorSum<TLeftVector,TRightRef>
-            (TLeftVector(left),std::forward<TRightRef>(right));
+            (TLeftVector(left, right.size()),std::forward<TRightRef>(right));
     }
 
     // vector * constant
@@ -50,8 +51,8 @@ namespace pnc{
         TLeftRef&& left,
         TRight right)
     {
-        using TRightVec = VectorUnit<TLeft::size,typename TLeft::data_type>;
-        return VectorProd<TLeftRef,TRightVec>(std::forward<TLeftRef>(left),TRightVec(right));
+        using TRightVec = VectorUnit<typename TLeft::size_type, typename TLeft::data_type>;
+        return VectorProd<TLeftRef,TRightVec>(std::forward<TLeftRef>(left),TRightVec(right, left.size()));
     }
 
     // constant * vector
@@ -65,8 +66,8 @@ namespace pnc{
         TLeft left,
         TRightRef&& right)
     {
-        using TLeftVector = VectorUnit<TRight::size,typename TRight::data_type>;
-        return VectorProd<TLeftVector,TRightRef>(TLeftVector(left),std::forward<TRightRef>(right));
+        using TLeftVector = VectorUnit<typename TRight::size_type,typename TRight::data_type>;
+        return VectorProd<TLeftVector,TRightRef>(TLeftVector(left,right.size()),std::forward<TRightRef>(right));
     }
 
     template <
@@ -86,15 +87,13 @@ namespace pnc{
         typename TLeft = std::remove_reference_t<TLeftRef>,
         typename typeL = typename TLeft::data_type,
         typename typeR = typename TRight::data_type,
-        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
-        unsigned int sizeL = TLeft::size,
-        unsigned int sizeR = TRight::size,
-        typename = typename std::enable_if_t<sizeL==sizeR>
+        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>
         >
     constexpr auto operator+(
         TLeftRef&& left,
         TRightRef&& right)
     {
+        assert(left.size() == right.size());
         return VectorSum<TLeftRef,TRightRef>(
             std::forward<TLeftRef>(left),
             std::forward<TRightRef>(right));
@@ -107,10 +106,7 @@ namespace pnc{
         typename TRight = typename std::remove_reference_t<TRightRef>,
         typename typeL = typename TLeft::data_type,
         typename typeR = typename TRight::data_type,
-        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
-        unsigned int sizeL = TLeft::size,
-        unsigned int sizeR = TRight::size,
-        typename = typename std::enable_if_t<sizeL==sizeR>
+        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>
         >
     constexpr auto operator*(
         TLeftRef&& left,
