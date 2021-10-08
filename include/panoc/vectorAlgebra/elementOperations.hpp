@@ -1,5 +1,7 @@
 #pragma once
 
+#include<algorithm>
+
 namespace pnc{
 
 template<typename TData>

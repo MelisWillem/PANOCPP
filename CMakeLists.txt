@@ -10,6 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories("${CMAKE_SOURCE_DIR}/lib/catch2")
 include_directories("${CMAKE_SOURCE_DIR}/include")
+include_directories("${CMAKE_SOURCE_DIR}/test")
 
 # Test the functionality
 enable_testing()
@@ -29,4 +30,3 @@ endif()
 add_test(NAME panocTests COMMAND panocTests)
 add_test(NAME vectorAlgebraTests COMMAND vectorAlgebraTests)
 add_test(NAME proxOperatorTests COMMAND proxOperatorTests)
-

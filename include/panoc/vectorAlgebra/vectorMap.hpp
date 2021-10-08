@@ -1,5 +1,9 @@
 #pragma once
 
+#include<type_traits>
+#include<utility>
+#include<panoc/vectorAlgebra/elementOperations.hpp>
+
 namespace pnc{
     template <
         typename TVecRef,
@@ -28,8 +32,8 @@ namespace pnc{
     };
 
     template<typename TVector>
-    using VectorNegative = VectorMap<TVector,Negative>;
+    using VectorNegative = VectorMap<TVector, Negative>;
 
     template<typename TVector>
-    using VectorAbs = VectorMap<TVector,AbsOp>;
+    using VectorAbs = VectorMap<TVector, AbsOp>;
 }

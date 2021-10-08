@@ -1,6 +1,8 @@
 #pragma once
 #include<string>
 #include<functional>
+#include<panoc/VectorAlgebra.hpp>
+#include<sstream>
 
 template<typename T>
 std::string ToString(const pnc::Vector<T>& vec)
@@ -15,6 +17,7 @@ std::string ToString(const pnc::Vector<T>& vec)
 
     std::stringstream ss;
     ss << "[";
+    const auto dimension = vec.size();
     for(typename T::size_type i=0; i < dimension-1; ++i)
     {
         ss << std::to_string(vec[i]) << ", ";

@@ -16,12 +16,15 @@ TEST_CASE("LBFGSTestRosen")
     SECTION("GIVEN_ROSENBROCK_CHECK_SOLVER")
     {
         using Vector = pnc::Vector<double>;
-        static constexpr unsigned int dimension = 2;
+        using data_type = typename Vector::data_type;
+        using size_type = typename Vector::size_type;
+        const size_type dimension = 2;
         static constexpr unsigned int bufferSize = 20;
-        auto solver = pnc::LBFGS<
+        using SolType = pnc::LBFGS<
             bufferSize,
-            typename Vector::data_type,
-            typename Vector::size_type> (dimension);
+            data_type,
+            size_type>;
+        auto solver = SolType(dimension);
 
         auto position = Vector{-1.2,1.0};// start at location (-1.2;1.)
         auto newPosition = Vector(position.size());
