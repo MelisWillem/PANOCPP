@@ -1,5 +1,7 @@
-#include <panoc/VectorAlgebra.hpp>
+#pragma once
+
 #include <type_traits>
+#include <utility>
 
 namespace pnc {
 

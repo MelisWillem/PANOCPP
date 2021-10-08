@@ -7,7 +7,11 @@
 namespace pnc{
 
 
-template<int buffer_size,typename data_type, typename size_type>
+template<
+    int buffer_size,
+    typename data_type,
+    typename size_type
+        >
 class LBFGS
 {
 private:
@@ -44,6 +48,7 @@ public:
             _y.emplace_back(dimension);
         }
     }
+
     bool hasCache()
     {
         return _activeBufferSize != 0;
@@ -129,9 +134,12 @@ public:
                 _activeBufferSize++;
             }
             _cursor = (_cursor + 1) % buffer_size;
+
             return true;
         }
+
         return false;
     }
 };
+
 }

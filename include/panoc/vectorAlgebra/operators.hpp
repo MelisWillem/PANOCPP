@@ -1,8 +1,20 @@
 #pragma once
 
+#include<type_traits>
+#include<utility>
+#include<panoc/vectorAlgebra/vectorMap.hpp>
+#include<panoc/vectorAlgebra/templateHelpers.hpp>
+#include<panoc/vectorAlgebra/vectorUnit.hpp>
+#include<panoc/vectorAlgebra/vectorPairwiseMap.hpp>
+
 namespace pnc{
 
-    template <typename TVecRef, typename TVec = std::remove_reference_t<TVecRef>>
+    template <
+        typename TVecRef,
+        typename TVec = std::remove_reference_t<TVecRef>,
+        typename = typename TVec::data_type,
+        typename = typename TVec::size_type
+            >
     constexpr auto operator-(TVecRef&& vec)
     {
         return VectorNegative<TVecRef>(std::forward<TVecRef>(vec));
@@ -35,7 +47,7 @@ namespace pnc{
         TLeft left, // not a vector
         TRightRef&& right)
     {
-        using TLeftVector = VectorUnit<TRight::size_type,typename TRight::data_type>;
+        using TLeftVector = VectorUnit<typename TRight::size_type, typename TRight::data_type>;
         return VectorSum<TLeftVector,TRightRef>
             (TLeftVector(left, right.size()),std::forward<TRightRef>(right));
     }
@@ -71,11 +83,16 @@ namespace pnc{
     }
 
     template <
-        typename TLeft,
-        typename TRight>
-    auto operator-(
-        TLeft&& left,
-        TRight&& right)
+        typename TLeftRef,
+        typename TRightRef,
+        typename TLeft = std::remove_reference_t<TLeftRef>,
+        typename TRight = std::remove_reference_t<TRightRef>,
+        typename typeL = typename TLeft::data_type,
+        typename typeR = typename TRight::data_type
+            >
+    constexpr auto operator-(
+        TLeftRef&& left,
+        TRightRef&& right)
     {
         return left + (-right);
     }

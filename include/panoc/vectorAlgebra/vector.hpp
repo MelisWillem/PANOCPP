@@ -13,7 +13,7 @@ namespace pnc {
 		using data_type = TData;
 		using size_type = int;
 
-		Vector(unsigned int size) : data(size){}
+		Vector(size_type size) : data(size){}
 
 		Vector(std::initializer_list<TData> input) : data(input)
 		{
@@ -59,7 +59,7 @@ namespace pnc {
 		template <
 			typename TVecRef,
 			typename TVec = std::remove_reference_t<TVecRef>,
-			typename TData = typename TVec::data_type,
+			typename TDataTVec = typename TVec::data_type,
 			typename TSize = typename TVec::size_type
 		>
 		Vector<TData>& operator=(TVecRef&& other)
