@@ -30,10 +30,11 @@ dont_touch_headers = [
     'functional',
     'type_traits',
     'initializer_list',
-    'sstream'
+    'sstream',
+    'algorithm'
 ]
 
-start_head_file = path.join(include_path, 'panoc.hpp')
+start_head_file = path.join(include_path, 'panoc/panoc.hpp')
 
 
 def getPathFromRepo(file_path):

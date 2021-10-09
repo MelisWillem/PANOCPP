@@ -1,7 +1,9 @@
 ﻿#include<panoc/VectorAlgebra.hpp>
+#include<panoc/proxOperators.hpp>
 #include<panoc/ProximalCalculator.hpp>
 #include<panoc/LBFGS.hpp>
 #include<panoc/fbe.hpp>
+#include<panoc/LocationBuilder.hpp>
 #include<math.h>
 
 namespace pnc {

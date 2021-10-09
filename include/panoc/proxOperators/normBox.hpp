@@ -1,3 +1,5 @@
+#pragma once
+
 #include<panoc/VectorAlgebra.hpp>
 #include<type_traits>
 #include<algorithm>

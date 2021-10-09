@@ -12,37 +12,37 @@
 #include<type_traits>
 #include<initializer_list>
 #include<sstream>
+#include<algorithm>
 
 
 
 namespace pnc {
-	template <unsigned int TSize, typename TData = double>
+	template <typename TData = double>
 	class Vector final {
 	private:
-		std::array<TData, TSize> data;
+		std::vector<TData> data;
 
 	public:
-		static constexpr unsigned int size = TSize;
 		using data_type = TData;
+		using size_type = int;
 
-		Vector() : data(){}
+		Vector(size_type size) : data(size){}
 
-		Vector(std::initializer_list<TData> input)
+		Vector(std::initializer_list<TData> input) : data(input)
 		{
-			size_t i = 0;
-			for (const auto val : input)
-			{
-				data[i] = val;
-				++i;
-			}
 		}
 
-		Vector(const Vector<size, data_type>& other)
+		Vector(const Vector<data_type>& other)
 		{
-			for (int i = 0; i < size; ++i)
+			for (int i = 0; i < size(); ++i)
 			{
 				data[i] = other[i];
 			}
+		}
+
+		auto size() const
+		{
+			return (size_type)data.size();
 		}
 
 		constexpr TData operator[](unsigned int index) const
@@ -60,9 +60,9 @@ namespace pnc {
 		{
 		}
 
-		Vector<size, TData>& operator=(const Vector<size, TData>& other)
+		Vector<TData>& operator=(const Vector<TData>& other)
 		{
-			for (unsigned int i = 0; i < size; i++) {
+			for (unsigned int i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 
@@ -71,13 +71,14 @@ namespace pnc {
 
 		template <
 			typename TVecRef,
-			typename TVec = std::remove_reference_t<TVecRef>>
-		Vector<size, TData>& operator=(TVecRef&& other)
+			typename TVec = std::remove_reference_t<TVecRef>,
+			typename TDataTVec = typename TVec::data_type,
+			typename TSize = typename TVec::size_type
+		>
+		Vector<TData>& operator=(TVecRef&& other)
 		{
-			static_assert(
-				size == TVec::size,
-				"Trying to assign vector expression to a vector of a different dimension");
-			for (unsigned int i = 0; i < size; i++) {
+			assert(size() == other.size());
+			for (TSize i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 
@@ -88,16 +89,20 @@ namespace pnc {
 
 namespace pnc{
 
-template <unsigned int TSize, typename TData = double>
+template <typename TSize, typename TData = double>
 class VectorUnit final {
 private:
     TData constant;
+    TSize size_vector;
 
 public:
-    static constexpr unsigned int size = TSize;
+    TSize size() const {
+        return size_vector;
+    }
     using data_type = TData;
+    using size_type = TSize;
 
-    explicit VectorUnit(TData constant): constant(constant)
+    explicit VectorUnit(TData constant, TSize s): constant(constant), size_vector(s)
     {}
 
     constexpr auto operator[](unsigned int index) const
@@ -108,7 +113,6 @@ public:
 
 }
 
-// Extra<helper stuff to keep things clean
 
 namespace pnc {
     template <typename TVector, typename TMaybeData>
@@ -120,13 +124,13 @@ namespace pnc {
 namespace pnc{
     template <
         typename TVec,
-        unsigned int size = TVec::size
+        typename TSize = typename TVec::size_type
         >
     constexpr auto MAX(const TVec& vec)
     {
-        static_assert(size> 0,"Max of a vector is only defined if the dimension of the vector is larger then 0");
+        assert(vec.size() > 0);
         auto cache = vec[0];
-        for (unsigned int i = 1; i < vec.size; i++) {
+        for (TSize i = 1; i < vec.size(); i++) {
             if (cache < vec[i]) {
                 cache = vec[i];
             }
@@ -140,18 +144,19 @@ namespace pnc{
     template <
         typename TVecRef ,
         typename TVec = std::remove_reference_t<TVecRef>,
-        unsigned int size = TVec::size
+        typename TSize = typename TVec::size_type
         >
     constexpr auto SUM(TVecRef&& vec)
     {
-        static_assert(size> 0,"Sum of a vector is only defined if the dimension of the vector is larger then 0");
+        assert(vec.size()> 0);
         auto cache = vec[0];
-        for (unsigned int i = 1; i < vec.size; i++) {
+        for (TSize i = 1; i < vec.size(); i++) {
             cache += vec[i];
         }
         return cache;
     }
 }
+
 
 
 namespace pnc{
@@ -210,25 +215,32 @@ private:
 
 public:
     using TLeft = typename std::remove_reference_t<TLeftRef>;
-    static constexpr unsigned int size = TLeft::size;
     using data_type = typename TLeft::data_type;
+    using size_type = typename TLeft::size_type;
+    size_type vector_size;
 
     explicit VectorPairwiseMap(
         TLeftRef&& left,
         TRightRef&& right)
         : v1(std::forward<TLeftRef>(left))
-        , v2(std::forward<TRightRef>(right))
+        , v2(std::forward<TRightRef>(right)),
+        vector_size(left.size())
     {
+        assert(left.size() == right.size());
     }
 
-    constexpr auto operator[](unsigned int index) const
+    size_type size() const {
+        return vector_size;
+    }
+
+    constexpr auto operator[](size_type index) const
     {
         return PairOp<data_type>().eval(v1[index],v2[index]);
     }
 };
 
 template< typename TLeftRef, typename TRightRef >
-using VectorSum = VectorPairwiseMap<TLeftRef,TRightRef,AddOperation>;
+using VectorSum = VectorPairwiseMap<TLeftRef, TRightRef, AddOperation>;
 
 template< typename TLeftRef, typename TRightRef >
 using VectorProd = VectorPairwiseMap<TLeftRef,TRightRef,MulOperation>;
@@ -236,6 +248,7 @@ using VectorProd = VectorPairwiseMap<TLeftRef,TRightRef,MulOperation>;
 template< typename TLeftRef, typename TRightRef >
 using VectorComponentMax = VectorPairwiseMap<TLeftRef,TRightRef,MaxOperation>;
 }
+
 
 
 namespace pnc{
@@ -249,29 +262,39 @@ namespace pnc{
         TVecRef v;
 
     public:
-        static constexpr unsigned int size = TVec::size;
         using data_type = typename TVec::data_type;
+        using size_type = typename TVec::size_type;
 
         VectorMap(TVecRef&& v) 
             : v(std::forward<TVecRef>(v)) {}
 
-        constexpr auto operator[](unsigned int index) const
+        size_type size() const {
+            return v.size();
+        }
+
+        constexpr auto operator[](size_type index) const
         {
             return TFunc<data_type>().eval(v[index]);
         }
     };
 
     template<typename TVector>
-    using VectorNegative = VectorMap<TVector,Negative>;
+    using VectorNegative = VectorMap<TVector, Negative>;
 
     template<typename TVector>
-    using VectorAbs = VectorMap<TVector,AbsOp>;
+    using VectorAbs = VectorMap<TVector, AbsOp>;
 }
+
 
 
 namespace pnc{
 
-    template <typename TVecRef, typename TVec = std::remove_reference_t<TVecRef>>
+    template <
+        typename TVecRef,
+        typename TVec = std::remove_reference_t<TVecRef>,
+        typename = typename TVec::data_type,
+        typename = typename TVec::size_type
+            >
     constexpr auto operator-(TVecRef&& vec)
     {
         return VectorNegative<TVecRef>(std::forward<TVecRef>(vec));
@@ -288,8 +311,9 @@ namespace pnc{
         TLeftRef&& left,
         TRight right)
     {
-        using TRightVec = VectorUnit<TLeft::size,typename TLeft::data_type>;
-        return VectorSum<TLeftRef,TRightVec>(std::forward<TLeftRef>(left),TRightVec(right));
+        using TRightVec = VectorUnit<typename TLeft::size_type, typename TLeft::data_type>;
+        return VectorSum<TLeftRef, TRightVec>
+            (std::forward<TLeftRef>(left), TRightVec(right, left.size()));
     }
 
     // constant + vector
@@ -300,12 +324,12 @@ namespace pnc{
         typename = typename TRight::data_type,
         typename = typename std::enable_if_t<IsDataOfVectorKind<TRight, TLeft>::value>>
     constexpr auto operator+(
-        TLeft left,
+        TLeft left, // not a vector
         TRightRef&& right)
     {
-        using TLeftVector = VectorUnit<TRight::size,typename TRight::data_type>;
+        using TLeftVector = VectorUnit<typename TRight::size_type, typename TRight::data_type>;
         return VectorSum<TLeftVector,TRightRef>
-            (TLeftVector(left),std::forward<TRightRef>(right));
+            (TLeftVector(left, right.size()),std::forward<TRightRef>(right));
     }
 
     // vector * constant
@@ -319,8 +343,8 @@ namespace pnc{
         TLeftRef&& left,
         TRight right)
     {
-        using TRightVec = VectorUnit<TLeft::size,typename TLeft::data_type>;
-        return VectorProd<TLeftRef,TRightVec>(std::forward<TLeftRef>(left),TRightVec(right));
+        using TRightVec = VectorUnit<typename TLeft::size_type, typename TLeft::data_type>;
+        return VectorProd<TLeftRef,TRightVec>(std::forward<TLeftRef>(left),TRightVec(right, left.size()));
     }
 
     // constant * vector
@@ -334,16 +358,21 @@ namespace pnc{
         TLeft left,
         TRightRef&& right)
     {
-        using TLeftVector = VectorUnit<TRight::size,typename TRight::data_type>;
-        return VectorProd<TLeftVector,TRightRef>(TLeftVector(left),std::forward<TRightRef>(right));
+        using TLeftVector = VectorUnit<typename TRight::size_type,typename TRight::data_type>;
+        return VectorProd<TLeftVector,TRightRef>(TLeftVector(left,right.size()),std::forward<TRightRef>(right));
     }
 
     template <
-        typename TLeft,
-        typename TRight>
-    auto operator-(
-        TLeft&& left,
-        TRight&& right)
+        typename TLeftRef,
+        typename TRightRef,
+        typename TLeft = std::remove_reference_t<TLeftRef>,
+        typename TRight = std::remove_reference_t<TRightRef>,
+        typename typeL = typename TLeft::data_type,
+        typename typeR = typename TRight::data_type
+            >
+    constexpr auto operator-(
+        TLeftRef&& left,
+        TRightRef&& right)
     {
         return left + (-right);
     }
@@ -355,15 +384,13 @@ namespace pnc{
         typename TLeft = std::remove_reference_t<TLeftRef>,
         typename typeL = typename TLeft::data_type,
         typename typeR = typename TRight::data_type,
-        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
-        unsigned int sizeL = TLeft::size,
-        unsigned int sizeR = TRight::size,
-        typename = typename std::enable_if_t<sizeL==sizeR>
+        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>
         >
     constexpr auto operator+(
         TLeftRef&& left,
         TRightRef&& right)
     {
+        assert(left.size() == right.size());
         return VectorSum<TLeftRef,TRightRef>(
             std::forward<TLeftRef>(left),
             std::forward<TRightRef>(right));
@@ -376,10 +403,7 @@ namespace pnc{
         typename TRight = typename std::remove_reference_t<TRightRef>,
         typename typeL = typename TLeft::data_type,
         typename typeR = typename TRight::data_type,
-        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>,
-        unsigned int sizeL = TLeft::size,
-        unsigned int sizeR = TRight::size,
-        typename = typename std::enable_if_t<sizeL==sizeR>
+        typename = typename std::enable_if_t<std::is_same<typeL, typeR>::value>
         >
     constexpr auto operator*(
         TLeftRef&& left,
@@ -396,12 +420,7 @@ namespace pnc{
 
     template <
         typename TLeftRef,
-        typename TRightRef,
-        typename TLeft = std::remove_reference_t<TLeftRef>,
-        typename TRight = std::remove_reference_t<TRightRef>,
-        unsigned int left_size = TLeft::size,
-        unsigned int right_size = TRight::size,
-        typename = typename std::enable_if_t<left_size==right_size>
+        typename TRightRef
         >
     constexpr auto ComponentWiseMax(
         TLeftRef&& left,
@@ -434,7 +453,6 @@ namespace pnc{
     template<
         typename TVectorRef,
         typename TVector = std::remove_reference_t<TVectorRef>,
-        unsigned int size = TVector::size,
         typename data_type = typename TVector::data_type
         >
     constexpr auto NormL1(TVectorRef&& vec) 
@@ -450,56 +468,228 @@ namespace pnc {
 		typename TVecRef,
         typename TVec = std::remove_reference_t<TVecRef>,
 		typename TData = typename TVec::data_type,
-        unsigned int size = TVec::size
+        typename TSize = typename TVec::size_type
 	>
 		TData InfNorm(TVecRef&& vec)
 	{
 		TData max = std::numeric_limits<TData>::min();
 
-		for (int i = 0; i < size; ++i)
+		for (TSize i = 0; i < vec.size(); ++i)
 		{
 			if (max < vec[i]) { max = vec[i]; }
 		}
 
 		return max;
 	}
-}
-namespace pnc{
+}// Proximal operator should look like:
+// x_new = prox_op(x_old)
+// This should use the concept of a vector and
+// not the vector itself.
 
-template<typename TVector>
-struct VectorTraits;
 
-template<typename TData,auto TSize>
-struct VectorTraits<pnc::Vector<TSize, TData>>
-{
-    using DataType = TData;
-    static constexpr auto size = TSize;
-};
 
-template<typename TVec, template<typename> typename TPolicy>
-struct VectorTraits<pnc::VectorMap<TVec, TPolicy>>{
-    using DataType = typename VectorTraits<TVec>::DataType;
-    static constexpr auto size = VectorTraits<TVec>::size;
-};
+namespace pnc {
 
-template<auto TSize, typename TData>
-struct VectorTraits<pnc::VectorUnit<TSize, TData>>{
-    using DataType = TData;
-    static constexpr auto size = TSize;
-};
-
-template<
-    typename TVecLeft,
-    typename TVecRight,
-    template<typename> typename TPairPolicy
+// The box operator always returns a vector with
+// elements inside the box borders.
+// If the value is outside the borders, the value of
+// the closest border is returned.
+// precondition: low < high
+template <
+    typename TVectorRef,
+    typename TVector = typename std::remove_reference_t<TVectorRef>,
+    typename TSize = typename TVector::size_type,
+    typename TData = typename TVector::data_type
 >
-struct VectorTraits<VectorPairwiseMap<TVecLeft, TVecRight, TPairPolicy>>{
-    // We should also make sure that the left and right vector
-    // have the same size and datatype when this trait is called.
-    using DataType = typename VectorTraits<TVecLeft>::DataType;
-    static constexpr auto size = VectorTraits<TVecLeft>::size;
+class BoxOperator final {
+public:
+    using data_type = TData;
+    using size_type = TSize;
+
+private:
+    const TVectorRef input;
+    const data_type penalty = 1; // todo make this dyamic...
+    const data_type low;
+    const data_type high;
+    data_type _cost;
+
+public:
+    explicit BoxOperator(
+        TVectorRef&& input,
+        const data_type low,
+        const data_type high)
+        : input(std::forward<TVectorRef>(input))
+        , low(low)
+        , high(high)
+    {
+        _cost = 0;
+        for (size_type i = 0; i < input.size(); ++i) {
+            if (input[i] > high || input[i] < low) {
+                _cost += penalty;
+            }
+        }
+    }
+
+    constexpr auto operator[](const int index)
+    {
+        if (input[index] > high) {
+            return high;
+        }
+        if (input[index] < low) {
+            return low;
+        }
+        return input[index];
+    }
+
+    constexpr auto cost() const
+    {
+        return _cost;
+    }
+
+    auto size() const
+    {
+        return input.size();
+    }
 };
 
+// The box operator always returns a vector with
+// elements inside the box borders.
+// If the value is outside the borders, the value of
+// the closest border is returned.
+template<
+    typename TVectorRef,
+    typename TVector = std::remove_reference_t<TVectorRef>
+>
+constexpr auto Box(
+    TVectorRef&& input,
+    const typename TVector::data_type low,
+    const typename TVector::data_type high)
+{
+    return BoxOperator<decltype(input)>
+        (std::forward<TVectorRef>(input), low, high);
+}
+
+template <
+    typename data_type
+>
+struct BoxOp final {
+    const data_type low;
+    const data_type high;
+    BoxOp(
+        const data_type low,
+        const data_type high)
+        : low(low)
+        , high(high)
+    {
+    }
+
+    template<
+        typename TVecRef,
+        typename TVec = typename std::remove_reference_t<TVecRef>,
+        typename = typename std::enable_if_t<std::is_same<data_type, typename TVec::data_type>::value>
+    >
+    auto operator()(TVecRef&& input) const
+    {
+        return BoxOperator<TVecRef>
+            (std::forward<TVecRef>(input), low, high);
+    }
+};
+
+}
+
+
+namespace pnc
+{
+    template<
+        typename TVecRef,
+        typename TVec = typename std::remove_reference_t<TVecRef>,
+        typename TData = typename TVec::data_type,
+        typename TSize = typename TVec::size_type
+            >
+    class NormBoxOperator{
+		public:
+            using data_type = TData;
+            using size_type = TSize;
+        private: 
+            enum State{
+                low,
+                mid,
+                high
+            };
+
+            TVecRef _input;
+            State _state;
+            data_type _cost;
+            data_type offset;
+
+            constexpr auto sign(const data_type x) const
+            {
+                return x < data_type{0} 
+                ? data_type{-1} 
+                : data_type{1};
+            }
+
+        public:
+            NormBoxOperator(TVecRef&& vec,data_type offset)
+                : _input(std::forward<TVecRef>(vec)),offset(offset)
+            {
+                auto norml1 = NormL1(vec);
+                if(norml1<offset)
+                {
+                    _state = State::low;
+                }
+                else if( norml1 > 2*offset)
+                {
+                    _state = State::high;
+                }
+                else
+                {
+                    _state = State::mid;
+                }
+                _cost = std::max(data_type{0},norml1-offset);
+            }
+
+            constexpr auto operator[](const unsigned int index) const
+            {
+                switch(_state)
+                {
+                    case State::low:
+                        return _input[index];
+                    case State::mid:
+                        return sign(_input[index])*offset;
+                    default: // case State::high:
+                        return sign(_input[index])*(abs(_input[index])-offset);
+                }
+            }
+
+            constexpr auto cost() const
+            {
+                return _cost;
+            }
+
+            constexpr auto size() const
+            {
+                return _input.size();
+            }
+    };
+
+    template< typename data_type >
+    struct NormBox{
+        const data_type offset;
+        NormBox(data_type offset) : offset(offset)
+        {
+        }
+
+        template<
+            typename TVecRef,
+            typename TVec = std::remove_reference_t<TVecRef>,
+            typename = std::enable_if_t<std::is_same_v<typename TVec::data_type,data_type>>
+                >
+        auto operator()(TVecRef&& vec) const
+        {
+            return NormBoxOperator<TVecRef>(std::forward<TVecRef>(vec),offset);
+        }
+    };
 }
 
 
@@ -509,7 +699,8 @@ namespace pnc {
 	template <
 		typename TVectorRef,
 		typename TVector = std::remove_reference_t<TVectorRef>,
-		typename TConstant = typename TVector::data_type
+		typename TConstant = typename TVector::data_type,
+		typename TSize = typename TVector::size_type
 	>
 		struct Location {
 		Location(
@@ -523,9 +714,9 @@ namespace pnc {
 			cost(cost)
 		{ }
 
-		Location() :
-			location(),
-			gradient(),
+		Location(TSize dimension) :
+			location(dimension),
+			gradient(dimension),
 			gamma(0),
 			cost(0)
 		{
@@ -589,7 +780,8 @@ public:
         typename TVector,
         typename TConfig,
         typename TCostFunction,
-        typename data_type = typename TVector::data_type
+        typename data_type = typename TVector::data_type,
+        typename size_type = typename TVector::size_type
             >
     static data_type estimate(
         const Location<TVector>& location,
@@ -600,7 +792,7 @@ public:
         // Find delta= max{small number,10^{-6}*u_0}
         auto delta = ComponentWiseMax(
                 (config.lipschitz_safetyValue*location.location),
-                pnc::VectorUnit<2,double>(config.minimum_delta));
+                pnc::VectorUnit<size_type, data_type>(config.minimum_delta, location.location.size()));
 
         auto deviated_position = location.location + delta;
         auto& deviated_gradient = cache;
@@ -613,15 +805,21 @@ public:
 };
 }
 
-template<
-    typename T,
-    auto dimension,
-    typename = typename std::enable_if_t<std::less<int>()(1, dimension)>>
-std::string ToString(const pnc::Vector<dimension, T>& vec)
+template<typename T>
+std::string ToString(const pnc::Vector<T>& vec)
 {
+    if (vec.size() == 0)
+    {
+		return "[]";
+    }
+    if (vec.size() == 1) {
+		return "[" + std::to_string(vec[0]) + "]";
+    }
+
     std::stringstream ss;
     ss << "[";
-    for(std::size_t i=0; i < dimension-1; ++i)
+    const auto dimension = vec.size();
+    for(typename T::size_type i=0; i < dimension-1; ++i)
     {
         ss << std::to_string(vec[i]) << ", ";
     }
@@ -630,18 +828,6 @@ std::string ToString(const pnc::Vector<dimension, T>& vec)
 
 
     return ss.str();
-}
-
-template<typename T>
-std::string ToString(const pnc::Vector<1, T>& vec)
-{
-    return "[" + std::to_string(vec[0]) + "]";
-}
-
-template<typename T>
-std::string ToString(const pnc::Vector<0, T>& vec)
-{
-    return "[]";
 }
 
 namespace pnc {
@@ -768,28 +954,46 @@ namespace pnc {
 namespace pnc{
 
 
-template<int buffer_size,typename data_type, int dimension>
+template<
+    int buffer_size,
+    typename data_type,
+    typename size_type
+        >
 class LBFGS
 {
 private:
-    using Vec = Vector<dimension,data_type>;
+    using Vec = Vector<data_type>;
     data_type hessian_estimate = 0;
     unsigned int _cursor = 0;
     unsigned int _activeBufferSize=0;
 
-    Vec _s[buffer_size + 1]; // saves all the stuff column wise, fortran style
-    Vec _y[buffer_size + 1]; // one element extra used in update
+    // TODO::implement matrix type
+    std::vector<Vec> _s;
+    std::vector<Vec> _y;
     data_type _alpha[buffer_size];
     data_type _rho[buffer_size];
+    size_type _dimension;
 
 	static int getFloatingIndex(int i,int cursor,int bufferSize) {
 		return (cursor - 1 - i + bufferSize) % bufferSize;
 	}
 
 public:
-    LBFGS()
+    LBFGS(size_type dimension) :
+        _dimension(dimension)
     {
         _activeBufferSize = 0;
+        // saves all the stuff column wise, fortran style
+		// one element extra used in update
+        // very inefficient -> should be done by using some
+        // kind of matrix type.
+		_s.reserve(buffer_size + 1);
+		_y.reserve(buffer_size + 1);
+        for(int i = 0; i < buffer_size+1; ++i)
+        {
+            _s.emplace_back(dimension);
+            _y.emplace_back(dimension);
+        }
     }
 
     bool hasCache()
@@ -877,11 +1081,14 @@ public:
                 _activeBufferSize++;
             }
             _cursor = (_cursor + 1) % buffer_size;
+
             return true;
         }
+
         return false;
     }
 };
+
 }
 
 namespace pnc{
@@ -916,6 +1123,43 @@ struct FBE
 
 }
 
+
+namespace pnc{
+
+    template<
+        typename TVecRef,
+        typename TVec = std::remove_reference_t<TVecRef>,
+        typename data_type = typename TVec::data_type
+        >
+    struct LocationBuilder{
+
+        template<typename TCostFunction>
+        static Location<TVec> Build(
+                TCostFunction& cost_function,
+                TVec&& position,
+                TVec&& gradient,
+                data_type cost,
+                TVec& cache)
+        {
+            using Estimator = LipschitzEstimator;
+            auto config = Estimator::default_config;
+            Location<TVec> location(
+                    std::forward<TVecRef>(position),
+                    std::forward<TVecRef>(gradient),
+                    cost,
+                    0);
+            double safety_value_linesearch = 0.05;
+            location.gamma = (1-safety_value_linesearch)/Estimator::estimate(
+                    location,
+                    config,
+                    cost_function,
+					cache);
+
+            return location;
+        }
+    };
+}
+
 namespace pnc {
 	struct PanocConfig {
 		int max_iterations;
@@ -933,29 +1177,31 @@ namespace pnc {
 		typename pnc::ProximalCalculator<TCostFunc, TProx>::Config prox_calc_config_ 
 			= pnc::ProximalCalculator<TCostFunc, TProx>::default_config;
 		pnc::FBE<TCostFunc, TProx> fbe_;
-		LBFGS<10, double, 2> accelerator_;
+		// TODO: make double/int generic
+		LBFGS<10, double, int> accelerator_;
 
 	public:
-		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig& config)
+		// TODO:: make in generic
+		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig& config, int dimension)
 			: cost_function_(cost_function),
 			prox_(prox),
 			config_(config),
 			prox_calc_(cost_function_, prox_),
 			fbe_(cost_function, prox_),
-			accelerator_()
+			accelerator_(dimension)
 		{}
 
 		template<typename TVec>
 		void Solve(TVec& input)
 		{
 			TVec vector = input;
-			TVec gradient; // will be moved.
+			TVec gradient(input.size()); // will be moved.
 			double fbe = 0;
 			double residual = std::numeric_limits<double>::max();
 
 			double cost = cost_function_(vector, gradient);
 
-			TVec cache; // Used only once when estimating gamma the first time.
+			TVec cache(input.size()); // Used only once when estimating gamma the first time.
 			Location<TVec> current = LocationBuilder<TVec>().Build(
 				cost_function_,
 				std::move(vector),
@@ -966,7 +1212,7 @@ namespace pnc {
 
 			auto prox_config = decltype(prox_calc_)::default_config;
 			Location<TVec> current_old = current;
-			Location<TVec> proximal;
+			Location<TVec> proximal(input.size());
 			prox_calc_.Calculate(current, proximal, prox_config);
 
 			for (int i = 0; i < config_.max_iterations && residual>config_.min_residual; ++i)
@@ -974,7 +1220,7 @@ namespace pnc {
 				auto oldGamma = proximal.gamma;
 				if (accelerator_.hasCache()) // If there is accelstep(which needs previous runs) then we can improve stuff
 				{
-					TVec accelerator_step;
+					TVec accelerator_step(input.size());
 					accelerator_.solve(current.gradient, accelerator_step);
 					current_old = current;
 					std::tie(residual, fbe) = Search(current, proximal, fbe, accelerator_step);
@@ -1018,8 +1264,8 @@ namespace pnc {
 			// as pure proximal gradient step.
 			for (int i = 0; i < config_.max_fbe_iterations; ++i)
 			{
-				Location<TVec> potential_new_location;
-				Location<TVec> potential_new_prox_location;
+				Location<TVec> potential_new_location(current.location.size());
+				Location<TVec> potential_new_prox_location(current.location.size());
 				// Take a step away from the current location, using part proximal
 				// and part the accerator.
 				potential_new_location.location = current.location
@@ -1027,7 +1273,7 @@ namespace pnc {
 					+ acceleration_step * tau(i);
 				potential_new_location.cost = cost_function_(potential_new_location.location, potential_new_location.gradient);
 				double safety_value_linesearch = 0.05;
-				TVec cache;
+				TVec cache(current.location.size());
 				auto lip_config = LipschitzEstimator::default_config;
 				potential_new_location.gamma = (1-safety_value_linesearch)/LipschitzEstimator::estimate<
 					TVec,
