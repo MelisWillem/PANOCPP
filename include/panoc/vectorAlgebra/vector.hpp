@@ -19,7 +19,8 @@ namespace pnc {
 		{
 		}
 
-		Vector(const Vector<data_type>& other)
+		Vector(const Vector<data_type>& other) :
+			data(other.size())
 		{
 			for (int i = 0; i < size(); ++i)
 			{
@@ -45,6 +46,13 @@ namespace pnc {
 		Vector(Vector&& other)
 			: data(std::move(other.data))
 		{
+		}
+
+		Vector<TData>& operator=(Vector<TData>&& other)
+		{
+			data = std::move(other.data);
+
+			return *this;
 		}
 
 		Vector<TData>& operator=(const Vector<TData>& other)

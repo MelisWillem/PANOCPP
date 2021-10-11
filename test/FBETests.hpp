@@ -37,14 +37,17 @@ TEST_CASE("Simple FBE example")
     const double low_fbe_test = -7;
     const double high_fbe_test = 7;
     pnc::BoxOp<double> prox_operator(low_fbe_test, high_fbe_test);
-    pnc::test::Poly<2, 3> cost_function;
+    constexpr auto degree = 2;
+    constexpr auto weight = 3;
+    constexpr int dimension = 2;
+    pnc::test::Poly<degree, weight> cost_function;
 	pnc::ProximalCalculator prox_cal{cost_function, prox_operator};
 
     vec_fbe startPosition = { 6, 10 };
-    vec_fbe startGradient(startPosition.size());
+    vec_fbe startGradient (dimension);
     auto startCost = cost_function(startPosition, startGradient);
 
-    vec_fbe cache(startPosition.size());
+    vec_fbe cache(dimension);
     auto start_location = pnc::LocationBuilder<
         vec_fbe>::Build(
 				cost_function,
@@ -54,8 +57,8 @@ TEST_CASE("Simple FBE example")
                 cache);
 
     auto solution = pnc::Location<vec_fbe>( // will be filled in by prox_calcluator
-        vec_fbe(startPosition.size()),
-        vec_fbe(startPosition.size()),
+        vec_fbe(dimension),
+        vec_fbe(dimension),
         0,
         0);
 

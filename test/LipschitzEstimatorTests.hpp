@@ -7,9 +7,10 @@ TEST_CASE("LipschitzEstimatorTest")
     SECTION("SIMPLE_POLYGON_TEST")
     {
         using Vec = pnc::Vector<double>;
-        pnc::test::Poly<2, 2> cost_function;
-        auto position = Vec{6.0,10.0}; 
-        auto gradient_start_position = Vec{};
+        constexpr auto degree = 2;
+        pnc::test::Poly<degree> cost_function;
+        Vec position = {6.0, 10.0}; 
+        Vec gradient_start_position = {0, 0};
         auto location_cost = cost_function(position,gradient_start_position);
         auto location = pnc::Location<Vec>(
                 std::move(position),
@@ -17,10 +18,10 @@ TEST_CASE("LipschitzEstimatorTest")
                 location_cost,
                 0);// gamma is set to zero, as it doesn't matter to the estimator
 
-        auto testConfig = pnc::LipschitzEstimator::default_config;
+        const auto testConfig = pnc::LipschitzEstimator::default_config;
 
-        auto cache = Vec(2); // size=2
-        double result = pnc::LipschitzEstimator::estimate(
+        Vec cache = { 0, 0 };
+        const double result = pnc::LipschitzEstimator::estimate(
                 location,
                 testConfig,
 				cost_function,

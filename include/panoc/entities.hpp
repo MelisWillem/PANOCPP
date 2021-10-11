@@ -31,6 +31,13 @@ namespace pnc {
 		}
 
 		template<typename TVec>
+		Location(Location<TVec>&& other) 
+			: location(std::move(other.location)),
+			gradient(std::move(other.gradient)),
+			cost(cost),
+			gamma(gamma){}
+
+		template<typename TVec>
 		Location(const Location<TVec>& other)
 			:
 			location(other.location),
@@ -40,16 +47,16 @@ namespace pnc {
 		{
 		}
 
-		template<typename TVec>
-		Location<TVec>& operator=(const Location<TVec>& other)
-		{
-			location = other.location;
-			gradient = other.gradient;
-			gamma = other.gamma;
-			 cost = other.cost;
+		//template<typename TVec>
+		//Location<TVec>& operator=(const Location<TVec>& other)
+		//{
+		//	location = other.location;
+		//	gradient = other.gradient;
+		//	gamma = other.gamma;
+		//	 cost = other.cost;
 
-			return this;
-		}
+		//	return this;
+		//}
 
 		TVectorRef location;
 		TVectorRef gradient;

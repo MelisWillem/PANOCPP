@@ -32,7 +32,8 @@ namespace pnc {
 		{
 		}
 
-		Vector(const Vector<data_type>& other)
+		Vector(const Vector<data_type>& other) :
+			data(other.size())
 		{
 			for (int i = 0; i < size(); ++i)
 			{
@@ -58,6 +59,13 @@ namespace pnc {
 		Vector(Vector&& other)
 			: data(std::move(other.data))
 		{
+		}
+
+		Vector<TData>& operator=(Vector<TData>&& other)
+		{
+			data = std::move(other.data);
+
+			return *this;
 		}
 
 		Vector<TData>& operator=(const Vector<TData>& other)
@@ -723,6 +731,13 @@ namespace pnc {
 		}
 
 		template<typename TVec>
+		Location(Location<TVec>&& other) 
+			: location(std::move(other.location)),
+			gradient(std::move(other.gradient)),
+			cost(cost),
+			gamma(gamma){}
+
+		template<typename TVec>
 		Location(const Location<TVec>& other)
 			:
 			location(other.location),
@@ -732,16 +747,16 @@ namespace pnc {
 		{
 		}
 
-		template<typename TVec>
-		Location<TVec>& operator=(const Location<TVec>& other)
-		{
-			location = other.location;
-			gradient = other.gradient;
-			gamma = other.gamma;
-			 cost = other.cost;
+		//template<typename TVec>
+		//Location<TVec>& operator=(const Location<TVec>& other)
+		//{
+		//	location = other.location;
+		//	gradient = other.gradient;
+		//	gamma = other.gamma;
+		//	 cost = other.cost;
 
-			return this;
-		}
+		//	return this;
+		//}
 
 		TVectorRef location;
 		TVectorRef gradient;
