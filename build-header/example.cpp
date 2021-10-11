@@ -5,7 +5,7 @@ int main(){
 	constexpr int degree = 6;
 	constexpr int dimension = 2;
 
-	auto cost_function = [](const auto& input, auto& output)
+	auto cost_function = [degree](const auto& input, auto& output)
 	{
 		const auto cost = pow(input[0], degree) + pow(input[1], degree);
 		output[0] = degree*pow(input[0], degree-1);
@@ -27,6 +27,7 @@ int main(){
 	solver.Solve(solution);
 
 	std::cout << "x[0]=" << solution[0]; // 0.204269
+    std::cout << " ";
 	std::cout << "x[1]=" << solution[1]; // 0.204269
 
 	return EXIT_SUCCESS;
