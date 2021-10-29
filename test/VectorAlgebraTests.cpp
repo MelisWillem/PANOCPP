@@ -4,6 +4,63 @@
 
 using namespace pnc;
 
+TEST_CASE("matrix tests")
+{
+    pnc::Matrix<int, int> a(2, 2);
+    a[0][0] = 1;
+    a[0][1] = 2;
+    a[1][0] = 3;
+    a[1][1] = 4;
+
+    pnc::Matrix<int, int> b(2, 2);
+    b[0][0] = 1;
+    b[0][1] = 1;
+    b[1][0] = 2;
+    b[1][1] = 2;
+
+    SECTION("create simple matrix, access the elements")
+    {
+        REQUIRE(a[0][0]==1);
+        REQUIRE(a[0][1]==2);
+        REQUIRE(a[1][0]==3);
+        REQUIRE(a[1][1]==4);
+    }
+
+    SECTION("mul collums together")
+    {
+        const int first = a[0]*b[0];
+        REQUIRE(first == (1*1) + (2*1));
+    }
+
+    SECTION("add collums together")
+    {
+        pnc::Vector<int> vec(2);
+        vec = a[0] + b[0];
+        REQUIRE(vec[0] == 2);
+        REQUIRE(vec[1] == 3);
+    }
+
+    SECTION("save col in vector")
+    {
+        pnc::Vector<int> vec(2);
+        vec = a[0];
+        REQUIRE(vec[0] == 1);
+        REQUIRE(vec[1] == 2);
+    }
+
+    SECTION("copy vector into matrix")
+    {
+        pnc::Vector<int, int> vec = {1,2};
+        pnc::Matrix<int, int> m(2, 2);
+        m[0][0] = -1;
+        m[0][1] = -1;
+
+        m[0] = vec;
+        REQUIRE(m[0][0] == 1);
+        REQUIRE(m[0][1] == 2);
+    }
+}
+
 TEST_CASE("vector algebra test")
 {
     pnc::Vector<double> vector1 =  { 1, 2 };
