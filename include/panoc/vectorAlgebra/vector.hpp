@@ -4,14 +4,14 @@
 #include <vector>
 
 namespace pnc {
-	template <typename TData = double>
+	template <typename TData = double, typename TSize = int>
 	class Vector final {
 	private:
 		std::vector<TData> data;
 
 	public:
 		using data_type = TData;
-		using size_type = int;
+		using size_type = TSize;
 
 		Vector(size_type size) : data(size){}
 
@@ -68,12 +68,12 @@ namespace pnc {
 			typename TVecRef,
 			typename TVec = std::remove_reference_t<TVecRef>,
 			typename TDataTVec = typename TVec::data_type,
-			typename TSize = typename TVec::size_type
+			typename TSizeVec = typename TVec::size_type
 		>
 		Vector<TData>& operator=(TVecRef&& other)
 		{
 			assert(size() == other.size());
-			for (TSize i = 0; i < size(); i++) {
+			for (TSizeVec i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 
