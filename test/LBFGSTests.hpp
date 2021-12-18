@@ -21,10 +21,9 @@ TEST_CASE("LBFGSTestRosen")
         const size_type dimension = 2;
         static constexpr unsigned int bufferSize = 20;
         using SolType = pnc::LBFGS<
-            bufferSize,
             data_type,
             size_type>;
-        auto solver = SolType(dimension);
+        auto solver = SolType(dimension, bufferSize);
 
         auto position = Vector{-1.2,1.0};// start at location (-1.2;1.)
         auto newPosition = Vector(position.size());
