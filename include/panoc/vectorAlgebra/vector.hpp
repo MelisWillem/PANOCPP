@@ -57,7 +57,7 @@ namespace pnc {
 
 		Vector<TData>& operator=(const Vector<TData>& other)
 		{
-			for (unsigned int i = 0; i < size(); i++) {
+			for (size_type i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 

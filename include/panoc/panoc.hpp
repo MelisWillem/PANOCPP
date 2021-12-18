@@ -11,6 +11,7 @@ namespace pnc {
 		int max_iterations;
 		int max_fbe_iterations;
 		double min_residual;
+		int lbfgs_cache_size;
 	};
 
 	template<typename TCostFunc, typename TProx>
@@ -24,7 +25,7 @@ namespace pnc {
 			= pnc::ProximalCalculator<TCostFunc, TProx>::default_config;
 		pnc::FBE<TCostFunc, TProx> fbe_;
 		// TODO: make double/int generic
-		LBFGS<10, double, int> accelerator_;
+		LBFGS<double, int> accelerator_;
 
 	public:
 		// TODO:: make in generic
@@ -34,7 +35,7 @@ namespace pnc {
 			config_(config),
 			prox_calc_(cost_function_, prox_),
 			fbe_(cost_function, prox_),
-			accelerator_(dimension)
+			accelerator_(dimension, config.lbfgs_cache_size)
 		{}
 
 		template<typename TVec>

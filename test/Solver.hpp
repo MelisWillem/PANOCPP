@@ -16,7 +16,8 @@ TEST_CASE("Given_poly_of_6th_degree_solve")
 	PanocConfig config = {
 		5, // max_iterations
 		10, // max_fbe_iterations
-		1e-15 // min_residual
+		1e-15, // min_residual
+		10 // lbfgs_cache_size
 	};
 	Panoc solver = { cost_function, prox_op, config , dimension};
 
@@ -43,7 +44,8 @@ TEST_CASE("Given_poly_of_6th_degree_solve_2th_test")
 	PanocConfig config = {
 		10, // max_iterations
 		10, // max_fbe_iterations
-		1e-15 // min_residual
+		1e-15, // min_residual
+		10 // lbfgs_cache_size
 	};
 	Panoc solver = { cost_function, prox_op, config, dimension};
 
