@@ -64,8 +64,7 @@ TEST_CASE("Simple FBE example")
 
     prox_cal.Calculate<vec_fbe>(
                     start_location,
-                    solution,
-            decltype(prox_cal)::default_config);
+                    solution);
 
     pnc::FBE fbe = {cost_function, prox_operator};
      auto res = fbe

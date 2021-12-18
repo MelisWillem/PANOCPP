@@ -38,8 +38,7 @@ TEST_CASE("Polygon test")
         {
             calc.Calculate(
                     initial_location,
-                    solution,
-                decltype(calc)::default_config);
+                    solution);
             initial_location.location = solution.location;
             initial_location.gradient = solution.gradient;
             initial_location.gamma = solution.gamma;
