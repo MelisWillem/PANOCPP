@@ -13,7 +13,7 @@ TEST_CASE("Given_poly_of_6th_degree_solve")
 	double offset = 2;
 	NormBox prox_op = { offset };
 
-	PanocConfig config = {
+	PanocConfig<double, int> config = {
 		5, // max_iterations
 		10, // max_fbe_iterations
 		1e-15, // min_residual
@@ -41,7 +41,7 @@ TEST_CASE("Given_poly_of_6th_degree_solve_2th_test")
 	double offset = 2;
 	NormBox prox_op = { offset };
 
-	PanocConfig config = {
+	PanocConfig<double, int> config = {
 		10, // max_iterations
 		10, // max_fbe_iterations
 		1e-15, // min_residual

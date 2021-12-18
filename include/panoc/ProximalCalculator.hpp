@@ -6,6 +6,7 @@
 #include <panoc/vectorAlgebra/tostring.hpp>
 #include <panoc/VectorAlgebra.hpp>
 #include <iostream>
+#include <limits>
 
 namespace pnc {
 
@@ -33,6 +34,7 @@ namespace pnc {
 			using Estimator = LipschitzEstimator;
 			TProximalOperator& prox_;
 
+			template<typename TValue>
 			struct Config {
 				/// The linesearch condition should be :
 				// fNew > f - df.DotProduct(df) 
@@ -42,14 +44,9 @@ namespace pnc {
 				// fNew > f - df.DotProduct(df)
 				//     + (1 - safetyValueLineSearch) / (2 * new_location.Gamma) * directionSquaredNorm
 				//     + 1e-6 * f;
-				const double safety_value_line_search;
+				static constexpr TValue safety_value_line_search = 0.05;
 				// The linesearch parameter gamma can never be smaller then this
-				const double min_gamma_value;
-			};
-			static constexpr Config default_config =
-			{
-				0.05, // safety_value_line_search
-				1e-15 // min_gamma_value
+				static constexpr TValue min_gamma_value = std::numeric_limits<TValue>::epsilon() * 10;
 			};
 
 			TCostFunction& cost_function_;
@@ -64,16 +61,15 @@ namespace pnc {
 			>
 				void Calculate(
 					const Location<TVector>& current,
-					Location<TVector>& proximal,
-					const Config config)
+					Location<TVector>& proximal)
 			{
 				TakeProxStep(
 					current,
 					current.gamma,
 					proximal);
 
-				while (!LinesearchCondition(current, proximal, config.safety_value_line_search) &&
-					(proximal.gamma / data_type{ 2 } > config.min_gamma_value))
+				while (!LinesearchCondition(current, proximal, Config<typename TVector::data_type>::safety_value_line_search) &&
+					(proximal.gamma / data_type{ 2 } > Config<typename TVector::data_type>::min_gamma_value))
 				{
 					TakeProxStep(
 						current,
