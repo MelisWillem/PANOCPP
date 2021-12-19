@@ -18,6 +18,15 @@ namespace pnc {
 		size_type lbfgs_cache_size;
 	};
 
+	template<typename TVec>
+	struct DoNothingCallback{
+		bool operator()(const Location<TVec>& v)
+		{
+			// return true to continue:
+			return true;
+		}
+	};
+
 	template<
 		typename TCostFunc,
 		typename TProx,
@@ -42,8 +51,8 @@ namespace pnc {
 			accelerator_(dimension, config.lbfgs_cache_size)
 		{}
 
-		template<typename TVec>
-		TSize Solve(TVec& input)
+		template<typename TVec, typename TCallback = DoNothingCallback<TVec>>
+		TSize Solve(TVec& input, TCallback callback = {})
 		{
 			static_assert(std::is_same_v<typename TVec::data_type, TData>,
 					"vector has incorrect data type");
@@ -97,6 +106,10 @@ namespace pnc {
 					current_old.gradient,
 					current.location,
 					current.gradient);
+
+				if(!callback(current)){
+					break;
+				}
 			}
 
 			input = current.location;
