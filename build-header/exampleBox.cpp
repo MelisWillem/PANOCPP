@@ -16,10 +16,14 @@ int main(){
 	double offset = 2;
 	pnc::BoxOp<double> box{ -4.0,4.0 };
 
-	pnc::PanocConfig config = {
+	// Make a panoc solver the uses double
+	// for value in vector, 
+	// and int for indices in vector.
+	pnc::PanocConfig<double, int> config = {
 		10, // max_iterations
 		10, // max_fbe_iterations
-		1e-15 // min_residual
+		1e-15, // min_residual
+		5 // lbfgs cache size
 	};
 	pnc::Panoc solver = { cost_function, box, config, dimension};
 

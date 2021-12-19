@@ -16,10 +16,11 @@ int main(){
 	double offset = 2;
 	pnc::NormBox prox_op = { offset };
 
-	pnc::PanocConfig config = {
-		10, // max_iterations
-		10, // max_fbe_iterations
-		1e-15 // min_residual
+	pnc::PanocConfig<double, int> config = {
+		10,    // max_iterations
+		10,    // max_fbe_iterations
+		1e-15, // min_residual
+		5      // lbfgs cache size
 	};
 	pnc::Panoc solver = { cost_function, prox_op, config, dimension};
 

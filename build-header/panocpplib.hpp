@@ -17,14 +17,14 @@
 
 
 namespace pnc {
-	template <typename TData = double>
+	template <typename TData = double, typename TSize = int>
 	class Vector final {
 	private:
 		std::vector<TData> data;
 
 	public:
 		using data_type = TData;
-		using size_type = int;
+		using size_type = TSize;
 
 		Vector(size_type size) : data(size){}
 
@@ -70,7 +70,7 @@ namespace pnc {
 
 		Vector<TData>& operator=(const Vector<TData>& other)
 		{
-			for (unsigned int i = 0; i < size(); i++) {
+			for (size_type i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 
@@ -81,12 +81,12 @@ namespace pnc {
 			typename TVecRef,
 			typename TVec = std::remove_reference_t<TVecRef>,
 			typename TDataTVec = typename TVec::data_type,
-			typename TSize = typename TVec::size_type
+			typename TSizeVec = typename TVec::size_type
 		>
 		Vector<TData>& operator=(TVecRef&& other)
 		{
 			assert(size() == other.size());
-			for (TSize i = 0; i < size(); i++) {
+			for (TSizeVec i = 0; i < size(); i++) {
 				data[i] = other[i];
 			}
 
@@ -489,7 +489,103 @@ namespace pnc {
 
 		return max;
 	}
-}// Proximal operator should look like:
+}
+
+
+namespace pnc{
+    template<typename TMatrix>
+	class CollumOfMatrixProxy{
+	public:
+		using data_type = typename TMatrix::data_type;
+		using size_type = typename TMatrix::size_type;
+
+	private:
+		TMatrix& m;
+		size_type col_id;
+
+	public:
+		CollumOfMatrixProxy(TMatrix& m_, size_type col_id_) 
+			: m(m_), col_id(col_id_)
+		{}
+
+		auto& operator[](size_type id)
+		{
+			return m.at(id, col_id);
+		}
+
+		auto operator[](size_type id) const
+		{
+			return m.at(id, col_id);
+		}
+
+		auto size() const
+		{
+			return m.dimensions().first;
+		}
+
+		template <
+			typename TVecRef,
+			typename TVec = std::remove_reference_t<TVecRef>,
+			typename TDataTVec = typename TVec::data_type,
+			typename TSize = typename TVec::size_type
+		>
+		auto& operator=(TVecRef&& other)
+		{
+			assert(size() == other.size());
+			for (TSize i = 0; i < size(); i++) {
+				m.at(i, col_id) = other[i];
+			}
+
+			return *this;
+		}
+	};
+
+    template<typename TData = double, typename TSize = int>
+    class Matrix final{
+	public:
+		using data_type = TData;
+		using size_type = TSize;
+	private:
+		// collum wise matrix, aka Fortran style
+		std::vector<TData> data;
+		size_type numOfRows;
+		size_type numOfCols;
+	public:
+		Matrix(size_type numOfCols_, size_type numOfRows_)
+			: numOfCols(numOfCols_),
+			  numOfRows(numOfRows_)
+		{
+			data.resize(numOfCols_*numOfRows_);
+		}
+
+		auto size() const
+		{
+			return (size_type)data.size();
+		}
+
+		// returns {numOfRows, numOfCols}
+		std::pair<size_type, size_type> dimensions() const 
+		{
+			return {numOfRows, numOfCols};
+		}
+
+		auto operator[](size_type col_id)
+		{
+			return CollumOfMatrixProxy(*this, col_id);
+		}
+
+		auto& at(size_type row_id, size_type col_id) 
+		{
+			return data[col_id*numOfRows + row_id];
+		}
+
+		auto at(size_type row_id, size_type col_id) const 
+		{
+			return data[col_id*numOfRows + row_id];
+		}
+    };
+}
+// Proximal operator should look like:
 // x_new = prox_op(x_old)
 // This should use the concept of a vector and
 // not the vector itself.
@@ -871,6 +967,7 @@ namespace pnc {
 			using Estimator = LipschitzEstimator;
 			TProximalOperator& prox_;
 
+			template<typename TValue>
 			struct Config {
 				/// The linesearch condition should be :
 				// fNew > f - df.DotProduct(df) 
@@ -880,14 +977,9 @@ namespace pnc {
 				// fNew > f - df.DotProduct(df)
 				//     + (1 - safetyValueLineSearch) / (2 * new_location.Gamma) * directionSquaredNorm
 				//     + 1e-6 * f;
-				const double safety_value_line_search;
+				static constexpr TValue safety_value_line_search = 0.05;
 				// The linesearch parameter gamma can never be smaller then this
-				const double min_gamma_value;
-			};
-			static constexpr Config default_config =
-			{
-				0.05, // safety_value_line_search
-				1e-15 // min_gamma_value
+				static constexpr TValue min_gamma_value = std::numeric_limits<TValue>::epsilon() * 10;
 			};
 
 			TCostFunction& cost_function_;
@@ -902,16 +994,15 @@ namespace pnc {
 			>
 				void Calculate(
 					const Location<TVector>& current,
-					Location<TVector>& proximal,
-					const Config config)
+					Location<TVector>& proximal)
 			{
 				TakeProxStep(
 					current,
 					current.gamma,
 					proximal);
 
-				while (!LinesearchCondition(current, proximal, config.safety_value_line_search) &&
-					(proximal.gamma / data_type{ 2 } > config.min_gamma_value))
+				while (!LinesearchCondition(current, proximal, Config<typename TVector::data_type>::safety_value_line_search) &&
+					(proximal.gamma / data_type{ 2 } > Config<typename TVector::data_type>::min_gamma_value))
 				{
 					TakeProxStep(
 						current,
@@ -968,9 +1059,7 @@ namespace pnc {
 
 namespace pnc{
 
-
 template<
-    int buffer_size,
     typename data_type,
     typename size_type
         >
@@ -979,36 +1068,30 @@ class LBFGS
 private:
     using Vec = Vector<data_type>;
     data_type hessian_estimate = 0;
-    unsigned int _cursor = 0;
-    unsigned int _activeBufferSize=0;
+    size_type _cursor = 0;
+    size_type _activeBufferSize=0;
+    size_type _cache_size;
 
-    // TODO::implement matrix type
-    std::vector<Vec> _s;
-    std::vector<Vec> _y;
-    data_type _alpha[buffer_size];
-    data_type _rho[buffer_size];
+    Matrix<data_type, size_type> _s;
+    Matrix<data_type, size_type> _y;
+    Vector<data_type, size_type> _alpha;
+    Vector<data_type, size_type> _rho;
     size_type _dimension;
 
-	static int getFloatingIndex(int i,int cursor,int bufferSize) {
-		return (cursor - 1 - i + bufferSize) % bufferSize;
+	static int getFloatingIndex(size_type i,size_type cursor, size_type cache_size) {
+		return (cursor - 1 - i + cache_size) % cache_size;
 	}
 
 public:
-    LBFGS(size_type dimension) :
-        _dimension(dimension)
+    LBFGS(size_type dimension, size_type cache_size) :
+        _dimension(dimension),
+        _alpha(cache_size),
+        _rho(cache_size),
+        _cache_size(cache_size),
+        _s(cache_size, dimension),
+        _y(cache_size, dimension)
     {
         _activeBufferSize = 0;
-        // saves all the stuff column wise, fortran style
-		// one element extra used in update
-        // very inefficient -> should be done by using some
-        // kind of matrix type.
-		_s.reserve(buffer_size + 1);
-		_y.reserve(buffer_size + 1);
-        for(int i = 0; i < buffer_size+1; ++i)
-        {
-            _s.emplace_back(dimension);
-            _y.emplace_back(dimension);
-        }
     }
 
     bool hasCache()
@@ -1024,37 +1107,37 @@ public:
     
     void solve(
         const Vec& gradient,
-        Vec& outputDirection)
+        Vec& output_direction)
     {
         if (_activeBufferSize == 0) 
         {
-            outputDirection = -gradient;
+            output_direction = -gradient;
             return;
         }
 
-        outputDirection = gradient*1.0;
-        for (int absolute_i = 0; absolute_i < _activeBufferSize; ++absolute_i)
+        output_direction = gradient*1.0;
+        for (size_type absolute_i = 0; absolute_i < _activeBufferSize; ++absolute_i)
         {
-            unsigned int i = getFloatingIndex(absolute_i, _cursor, buffer_size);
+            size_type i = getFloatingIndex(absolute_i, _cursor, _cache_size);
 
             _rho[i] = 1/(_s[i]*_y[i]);
-            _alpha[i] = _rho[i]*(_s[i]*outputDirection);
+            _alpha[i] = _rho[i]*(_s[i]*output_direction);
 
-            outputDirection = outputDirection -(_alpha[i]*_y[i]);
+            output_direction = output_direction -(_alpha[i]*_y[i]);
         }
 
-        outputDirection = outputDirection * hessian_estimate;
+        output_direction = output_direction * hessian_estimate;
 
         data_type beta;
-        for (int absolute_i = _activeBufferSize-1; absolute_i > -1; --absolute_i)
+        for (size_type absolute_i = _activeBufferSize-1; absolute_i > -1; --absolute_i)
         {
-            unsigned int i = getFloatingIndex(absolute_i, _cursor, buffer_size);
+            size_type i = getFloatingIndex(absolute_i, _cursor, _cache_size);
 
-            beta = _rho[i]*(_y[i]*outputDirection);
-            outputDirection = outputDirection + (_alpha[i]-beta)*_s[i];
+            beta = _rho[i]*(_y[i]*output_direction);
+            output_direction = output_direction + (_alpha[i]-beta)*_s[i];
         }
 
-        outputDirection = -outputDirection;
+        output_direction = -output_direction;
     }
     
     template<typename TVectorS,typename TVectorY>
@@ -1091,11 +1174,11 @@ public:
             hessian_estimate = (potentialS*potentialY)
                 / (potentialY*potentialY);
 
-            if (_activeBufferSize < buffer_size)
+            if (_activeBufferSize < _cache_size)
             {
                 _activeBufferSize++;
             }
-            _cursor = (_cursor + 1) % buffer_size;
+            _cursor = (_cursor + 1) % _cache_size;
 
             return true;
         }
@@ -1176,45 +1259,64 @@ namespace pnc{
 }
 
 namespace pnc {
+	template<typename TData = double, typename TSize = int>
 	struct PanocConfig {
-		int max_iterations;
-		int max_fbe_iterations;
-		double min_residual;
+		using data_type = TData;
+		using size_type = TSize;
+
+		size_type max_iterations;
+		size_type max_fbe_iterations;
+		data_type min_residual;
+		size_type lbfgs_cache_size;
 	};
 
-	template<typename TCostFunc, typename TProx>
+	template<typename TVec>
+	struct DoNothingCallback{
+		bool operator()(const Location<TVec>& v)
+		{
+			// return true to continue:
+			return true;
+		}
+	};
+
+	template<
+		typename TCostFunc,
+		typename TProx,
+		typename TSize,
+		typename TData>
 	class Panoc {
 
 		TCostFunc& cost_function_;
 		TProx& prox_;
-		PanocConfig config_;
+		PanocConfig<TData, TSize> config_;
 		pnc::ProximalCalculator<TCostFunc, TProx> prox_calc_;
-		typename pnc::ProximalCalculator<TCostFunc, TProx>::Config prox_calc_config_ 
-			= pnc::ProximalCalculator<TCostFunc, TProx>::default_config;
 		pnc::FBE<TCostFunc, TProx> fbe_;
-		// TODO: make double/int generic
-		LBFGS<10, double, int> accelerator_;
+		LBFGS<TData, TSize> accelerator_;
 
 	public:
-		// TODO:: make in generic
-		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig& config, int dimension)
+		Panoc(TCostFunc& cost_function, TProx& prox, PanocConfig<TData, TSize>& config, int dimension)
 			: cost_function_(cost_function),
 			prox_(prox),
 			config_(config),
 			prox_calc_(cost_function_, prox_),
 			fbe_(cost_function, prox_),
-			accelerator_(dimension)
+			accelerator_(dimension, config.lbfgs_cache_size)
 		{}
 
-		template<typename TVec>
-		void Solve(TVec& input)
+		template<typename TVec, typename TCallback = DoNothingCallback<TVec>>
+		TSize Solve(TVec& input, TCallback callback = {})
 		{
+			static_assert(std::is_same_v<typename TVec::data_type, TData>,
+					"vector has incorrect data type");
+			static_assert(std::is_same_v<typename TVec::size_type, TSize>,
+					"vector has incorrect index type");
+
 			TVec vector = input;
 			TVec gradient(input.size()); // will be moved.
-			double fbe = 0;
-			double residual = std::numeric_limits<double>::max();
+			TData fbe = 0;
+			TData residual = std::numeric_limits<TData>::max();
 
-			double cost = cost_function_(vector, gradient);
+			TData cost = cost_function_(vector, gradient);
 
 			TVec cache(input.size()); // Used only once when estimating gamma the first time.
 			Location<TVec> current = LocationBuilder<TVec>().Build(
@@ -1225,12 +1327,12 @@ namespace pnc {
 				cache
 			);
 
-			auto prox_config = decltype(prox_calc_)::default_config;
 			Location<TVec> current_old = current;
 			Location<TVec> proximal(input.size());
-			prox_calc_.Calculate(current, proximal, prox_config);
+			prox_calc_.Calculate(current, proximal);
 
-			for (int i = 0; i < config_.max_iterations && residual>config_.min_residual; ++i)
+			TSize i_solve;
+			for (i_solve = 0; i_solve < config_.max_iterations && residual>config_.min_residual; ++i_solve)
 			{
 				auto oldGamma = proximal.gamma;
 				if (accelerator_.hasCache()) // If there is accelstep(which needs previous runs) then we can improve stuff
@@ -1243,7 +1345,7 @@ namespace pnc {
 				else
 				{
 					std::swap(current, proximal);
-					prox_calc_.Calculate(current, proximal, decltype(prox_calc_)::default_config);
+					prox_calc_.Calculate(current, proximal);
 					fbe = fbe_.Eval(current, proximal);
 					residual = ResidualInfNorm(current, proximal);
 				}
@@ -1256,22 +1358,28 @@ namespace pnc {
 					current_old.gradient,
 					current.location,
 					current.gradient);
+
+				if(!callback(current)){
+					break;
+				}
 			}
 
 			input = current.location;
+
+			return i_solve;
 		}
 
 		template<typename TVec>
-		double ResidualInfNorm(const Location<TVec>& current,const Location<TVec>& proximal)
+		TData ResidualInfNorm(const Location<TVec>& current,const Location<TVec>& proximal)
 		{
 			return InfNorm((current.location - proximal.location) * (1/proximal.gamma));
 		}
 
 		template<typename TVec>
-		std::tuple<double, double> Search(
+		std::tuple<TData, TData> Search(
 			Location<TVec>& current,
 			Location<TVec>& proximal,
-			double fbe,
+			TData fbe,
 			TVec& acceleration_step)
 		{
 			auto tau = [](auto i) {return pow(2, i); };
@@ -1287,7 +1395,7 @@ namespace pnc {
 					+ (proximal.location - current.location) * (1 - tau(i))
 					+ acceleration_step * tau(i);
 				potential_new_location.cost = cost_function_(potential_new_location.location, potential_new_location.gradient);
-				double safety_value_linesearch = 0.05;
+				TData safety_value_linesearch = 0.05;
 				TVec cache(current.location.size());
 				auto lip_config = LipschitzEstimator::default_config;
 				potential_new_location.gamma = (1-safety_value_linesearch)/LipschitzEstimator::estimate<
@@ -1301,7 +1409,7 @@ namespace pnc {
 
 				// Calculate the fbe use a proximal step, keep the proximal step in the cache
 				// as we can reuse it if this step is accepted.
-				prox_calc_.Calculate(potential_new_location, potential_new_prox_location, prox_calc_config_);
+				prox_calc_.Calculate(potential_new_location, potential_new_prox_location);
 				auto new_fbe = fbe_.Eval(potential_new_location, potential_new_prox_location);
 
 				if (new_fbe < fbe)
@@ -1315,11 +1423,10 @@ namespace pnc {
 			}
 
 			// use only proximal gradient, no accelerator
-			auto prox_config = decltype(prox_calc_)::default_config;
 			std::swap(current, proximal); // Take a pure prox step.
-			prox_calc_.Calculate(current,proximal, prox_config);
-			const double res = ResidualInfNorm(current, proximal);
-			const double new_fbe = fbe_.Eval(current, proximal);
+			prox_calc_.Calculate(current,proximal);
+			const TData res = ResidualInfNorm(current, proximal);
+			const TData new_fbe = fbe_.Eval(current, proximal);
 			return { res, new_fbe };
 		}
 	};
