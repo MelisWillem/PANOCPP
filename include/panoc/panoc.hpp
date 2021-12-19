@@ -9,12 +9,12 @@
 namespace pnc {
 	template<typename TData = double, typename TSize = int>
 	struct PanocConfig {
-		using value_type = TData;
+		using data_type = TData;
 		using size_type = TSize;
 
 		size_type max_iterations;
 		size_type max_fbe_iterations;
-		value_type min_residual;
+		data_type min_residual;
 		size_type lbfgs_cache_size;
 	};
 
@@ -43,8 +43,13 @@ namespace pnc {
 		{}
 
 		template<typename TVec>
-		void Solve(TVec& input)
+		TSize Solve(TVec& input)
 		{
+			static_assert(std::is_same_v<typename TVec::data_type, TData>,
+					"vector has incorrect data type");
+			static_assert(std::is_same_v<typename TVec::size_type, TSize>,
+					"vector has incorrect index type");
+
 			TVec vector = input;
 			TVec gradient(input.size()); // will be moved.
 			TData fbe = 0;
@@ -65,7 +70,8 @@ namespace pnc {
 			Location<TVec> proximal(input.size());
 			prox_calc_.Calculate(current, proximal);
 
-			for (TSize i = 0; i < config_.max_iterations && residual>config_.min_residual; ++i)
+			TSize i_solve;
+			for (i_solve = 0; i_solve < config_.max_iterations && residual>config_.min_residual; ++i_solve)
 			{
 				auto oldGamma = proximal.gamma;
 				if (accelerator_.hasCache()) // If there is accelstep(which needs previous runs) then we can improve stuff
@@ -94,6 +100,8 @@ namespace pnc {
 			}
 
 			input = current.location;
+
+			return i_solve;
 		}
 
 		template<typename TVec>
