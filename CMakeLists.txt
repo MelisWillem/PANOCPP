@@ -4,8 +4,11 @@ if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
 endif()
 ###
 
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.16)
 project (PANOCPP)
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 17)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories("${CMAKE_SOURCE_DIR}/lib/catch2")

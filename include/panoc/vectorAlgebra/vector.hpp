@@ -2,6 +2,7 @@
 
 #include <initializer_list>
 #include <vector>
+#include <panoc/traits.hpp>
 
 namespace pnc {
 	template <typename TData = double, typename TSize = int>
@@ -80,4 +81,15 @@ namespace pnc {
 			return *this;
 		}
 	};
+
+	template<typename TData, typename TIndex>
+	struct data_type<Vector<TData, TIndex>>{
+		using type = TData;
+	};
+
+	template<typename TData, typename TIndex>
+	struct index_type<Vector<TData, TIndex>>{
+		using type = TIndex;
+	};
+
 }
